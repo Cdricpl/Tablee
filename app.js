@@ -89,12 +89,21 @@ function persist() {
 
 // === HELPERS ===
 const $ = sel => document.querySelector(sel);
+// `html:` n'accepte que des chaînes inertes (SVG d'icônes hardcodés). Toute trace
+// de <script>, gestionnaire d'événement inline ou URL `javascript:` est refusée
+// pour empêcher une XSS si du contenu dynamique y atterrissait par erreur.
+const UNSAFE_HTML_RE = /<script\b|\son\w+\s*=|javascript:/i;
 const h = (tag, attrs = {}, ...children) => {
   const el = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) {
     if (v == null || v === false) continue;
     if (k === 'class') el.className = v;
-    else if (k === 'html') el.innerHTML = v;
+    else if (k === 'html') {
+      if (typeof v !== 'string' || UNSAFE_HTML_RE.test(v)) {
+        throw new Error('h(): contenu html non sûr refusé');
+      }
+      el.innerHTML = v;
+    }
     else if (k.startsWith('on')) el.addEventListener(k.slice(2).toLowerCase(), v);
     else if (k === 'data') Object.entries(v).forEach(([dk, dv]) => el.dataset[dk] = dv);
     else el.setAttribute(k, v);
@@ -181,7 +190,7 @@ function viewLibrary() {
       visible = state.recipes.filter(r => r.cat === cat);
     }
 
-    resultsEl.innerHTML = '';
+    resultsEl.replaceChildren();
     if (!q && !cat) {
       resultsEl.append(h('p', { class: 'empty' },
         h('em', {}, 'Choisissez une catégorie ci-dessus pour voir les recettes,'),
@@ -326,7 +335,7 @@ function openRecipe(id, opts = {}) {
 
   function renderModal() {
     const m = $('#modal');
-    m.innerHTML = '';
+    m.replaceChildren();
     m.append(content());
   }
 
@@ -399,7 +408,7 @@ function openRecipeObject(r, opts = {}) {
 
   function renderModal() {
     const m = $('#modal');
-    m.innerHTML = '';
+    m.replaceChildren();
     m.append(content());
   }
 
@@ -421,7 +430,7 @@ function portionsControl(val, onChange) {
 function closeModal() {
   state.modal = null;
   $('#modal').hidden = true;
-  $('#modal').innerHTML = '';
+  $('#modal').replaceChildren();
 }
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
@@ -512,7 +521,7 @@ function openEdit(id, prefill) {
 
   function renderModal() {
     const m = $('#modal');
-    m.innerHTML = '';
+    m.replaceChildren();
     m.append(h('div', { class: 'modal-card' },
       h('button', { class: 'modal-close', onclick: closeModal }, '×'),
       h('p', { class: 'kicker' }, h('em', {}, 'éditer')),
@@ -737,7 +746,7 @@ function openPicker(dayIdx, slot) {
     const list = state.recipes.filter(r => !lq ||
       r.name.toLowerCase().includes(lq) ||
       catById(r.cat)?.name.toLowerCase().includes(lq));
-    listEl.innerHTML = '';
+    listEl.replaceChildren();
     if (list.length === 0) {
       listEl.append(h('p', { class: 'empty' }, 'Aucune recette trouvée.'));
       return;
@@ -938,7 +947,7 @@ function openManualAdd() {
   const qtyInput = h('input', { type: 'number', value: '1', oninput: e => qty = +e.target.value || 0 });
 
   function refreshSuggestions() {
-    sugEl.innerHTML = '';
+    sugEl.replaceChildren();
     const q = normalizeIngredient(name);
     if (!q || q.length < 1) return;
     const matches = [...seenNames.entries()]
@@ -966,7 +975,7 @@ function openManualAdd() {
   }
 
   function refreshAisle() {
-    aisleEl.innerHTML = '';
+    aisleEl.replaceChildren();
     if (!name.trim()) return;
     const suggested = aisleForUser(name);
     aisleEl.append(
@@ -1088,7 +1097,7 @@ function openMenuLibre(opts = {}) {
   const dynEl = h('div', { class: 'menu-libre-dyn' });
 
   function refresh() {
-    dynEl.innerHTML = '';
+    dynEl.replaceChildren();
 
     if (!input.trim()) {
       dynEl.append(h('p', { class: 'muted', style: 'font-family:var(--serif-body);font-style:italic;font-size:16px;margin-top:8px' },
@@ -1245,7 +1254,7 @@ function openImport() {
   const dynEl = h('div');
 
   function refresh() {
-    dynEl.innerHTML = '';
+    dynEl.replaceChildren();
     if (!hasApiKey()) {
       dynEl.append(h('p', { class: 'muted' }, 'Clé API requise. ',
         h('a', { href: '#', onclick: e => { e.preventDefault(); closeModal(); openSettings(); } },
@@ -1346,7 +1355,7 @@ function openSettings() {
 function render() {
   setMastheadDay();
   const app = $('#app');
-  app.innerHTML = '';
+  app.replaceChildren();
   if (state.view === 'library') app.append(viewLibrary());
   else if (state.view === 'week') app.append(viewWeek());
   else if (state.view === 'shopping') app.append(viewShopping());
