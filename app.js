@@ -1335,20 +1335,99 @@ function openSettings() {
       '. Votre clé reste stockée localement dans ce navigateur, jamais transmise ailleurs que vers ',
       h('code', {}, 'generativelanguage.googleapis.com'), '.'),
 
+    h('div', { class: 'callout' },
+      h('strong', {}, '⚠ Sécurité de votre clé. '),
+      'La clé est en clair dans ce navigateur (localStorage). ',
+      'Pour limiter les risques, créez-en une ', h('strong', {}, 'dédiée à Tablée'),
+      ' avec un ', h('strong', {}, 'quota quotidien'),
+      ' et, si vous publiez l\'app, une ',
+      h('strong', {}, 'restriction de référent HTTP'), ' dans la console Google Cloud.',
+    ),
+
     field('Clé API Gemini', h('input', {
-      type: 'password', value: key, placeholder: 'AIzaSy…',
+      type: 'password', value: key, placeholder: 'AIzaSy…', autocomplete: 'off',
       oninput: e => key = e.target.value,
     })),
     h('p', { style: 'font-size:12px;color:var(--olive);margin-top:-8px' },
       'Obtenir une clé : ',
-      h('a', { href: 'https://aistudio.google.com/apikey', target: '_blank' },
+      h('a', { href: 'https://aistudio.google.com/apikey', target: '_blank', rel: 'noopener noreferrer' },
         'aistudio.google.com/apikey')),
 
     h('div', { class: 'form-foot' },
       h('button', { class: 'btn', onclick: () => { setApiKey(null); closeModal(); toast('Clé supprimée'); } }, 'Supprimer'),
       h('button', { class: 'btn primary', onclick: () => { setApiKey(key.trim() || null); closeModal(); toast('Clé enregistrée'); } }, 'Enregistrer'),
     ),
+
+    h('hr', { class: 'dashed' }),
+    h('p', { class: 'kicker' }, h('em', {}, 'mes données')),
+    h('p', { style: 'font-family:var(--serif-body);font-size:15px;line-height:1.5;margin-top:4px' },
+      'Vos recettes, semaine et liste de courses ne quittent pas ce navigateur. ',
+      'Exportez-les pour les sauvegarder ou changer d\'appareil.'),
+
+    h('div', { class: 'btn-row' },
+      h('button', { class: 'btn', onclick: exportData }, icon.download(), 'Exporter mes données'),
+      h('label', { class: 'btn' },
+        icon.upload(), 'Importer une sauvegarde',
+        h('input', {
+          type: 'file', accept: 'application/json', class: 'hidden-input',
+          onchange: async e => { const f = e.target.files[0]; if (f) await importData(f); },
+        }),
+      ),
+    ),
   ));
+}
+
+function exportData() {
+  try {
+    const payload = {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      recipes: state.recipes.filter(r => r.source !== 'seed' || r._edited),
+      week: state.week,
+      shopping: state.shopping,
+      userAisles: userAisleMap,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `tablee-export-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast('Sauvegarde téléchargée');
+  } catch (e) {
+    console.error(e);
+    toast('Export impossible');
+  }
+}
+
+async function importData(file) {
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if (!data || typeof data !== 'object') throw new Error('Format invalide');
+    if (!confirm('Importer cette sauvegarde ? Vos recettes / semaine / courses actuelles seront remplacées.')) return;
+    if (Array.isArray(data.recipes)) {
+      const seedIds = new Set(SEED_RECIPES.map(r => r.id));
+      const userRecipes = data.recipes.filter(r => r && r.id && !seedIds.has(r.id));
+      state.recipes = [...SEED_RECIPES.map(r => ({ ...r, source: 'seed' })), ...userRecipes];
+    }
+    if (data.week && Array.isArray(data.week) && data.week.length === 7) state.week = data.week;
+    if (data.shopping && typeof data.shopping === 'object') state.shopping = data.shopping;
+    if (data.userAisles && typeof data.userAisles === 'object') {
+      userAisleMap = data.userAisles;
+      localStorage.setItem(USER_AISLES_KEY, JSON.stringify(userAisleMap));
+    }
+    persist();
+    closeModal();
+    render();
+    toast('Sauvegarde importée');
+  } catch (e) {
+    console.error(e);
+    toast('Import impossible : fichier invalide');
+  }
 }
 
 // === MAIN RENDER ===

@@ -26,17 +26,31 @@ async function callGemini({ system, parts, model = MODEL_FAST, jsonOnly = true }
     contents: [{ role: 'user', parts }],
     generation_config: jsonOnly ? { response_mime_type: 'application/json' } : undefined,
   };
-  const res = await fetch(ENDPOINT(model), {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'x-goog-api-key': apiKey,
-    },
-    body: JSON.stringify(body),
-  });
+  let res;
+  try {
+    res = await fetch(ENDPOINT(model), {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-goog-api-key': apiKey,
+      },
+      body: JSON.stringify(body),
+    });
+  } catch (_) {
+    throw new Error('Connexion impossible à Gemini. Vérifiez votre réseau.');
+  }
   if (!res.ok) {
-    const t = await res.text();
-    throw new Error(`Gemini API ${res.status}: ${t.slice(0, 300)}`);
+    const t = await res.text().catch(() => '');
+    const tail = t.slice(0, 300);
+    if (res.status === 400 && /API key not valid/i.test(t))
+      throw new Error('Clé API invalide. Vérifiez-la dans Réglages.');
+    if (res.status === 401 || res.status === 403)
+      throw new Error('Clé API refusée par Google. Vérifiez les restrictions de la clé.');
+    if (res.status === 429)
+      throw new Error('Quota Gemini dépassé. Réessayez plus tard.');
+    if (res.status >= 500)
+      throw new Error('Gemini est temporairement indisponible. Réessayez.');
+    throw new Error(`Gemini API ${res.status}: ${tail}`);
   }
   const json = await res.json();
   const txt = json?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('').trim() || '';
@@ -51,7 +65,11 @@ function parseJsonFromText(text) {
   const start = t.indexOf('{');
   const end = t.lastIndexOf('}');
   if (start >= 0 && end > start) t = t.slice(start, end + 1);
-  return JSON.parse(t);
+  try {
+    return JSON.parse(t);
+  } catch (_) {
+    throw new Error("Réponse de Gemini illisible. Réessayez.");
+  }
 }
 
 const RECIPE_SCHEMA_DESC = `{
