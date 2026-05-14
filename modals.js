@@ -438,12 +438,21 @@ export function openManualAdd() {
     sugEl.replaceChildren();
     const q = normalizeIngredient(name);
     if (!q || q.length < 1) return;
+    // Score : exact > préfixe > substring. Tri par score décroissant puis alpha.
     const matches = [...seenNames.entries()]
-      .filter(([norm]) => norm.includes(q))
+      .map(([norm, display]) => {
+        let score = 0;
+        if (norm === q) score = 3;
+        else if (norm.startsWith(q)) score = 2;
+        else if (norm.includes(q)) score = 1;
+        return { norm, display, score };
+      })
+      .filter(m => m.score > 0)
+      .sort((a, b) => b.score - a.score || a.display.localeCompare(b.display))
       .slice(0, 6);
     if (matches.length === 0) return;
-    matches.forEach(([norm, display]) => sugEl.append(
-      h('button', { class: 'autocomplete-item', onclick: () => {
+    matches.forEach(({ norm, display }) => sugEl.append(
+      h('button', { class: 'autocomplete-item', type: 'button', onclick: () => {
         name = display;
         inputEl.value = display;
         const u = INGREDIENT_DB[norm]?.unit;
@@ -456,8 +465,8 @@ export function openManualAdd() {
         inputEl.focus();
       } },
         h('span', { class: 'emoji' }, INGREDIENT_DB[norm]?.emoji || aisleEmojiOf(aisleFor(display))),
-        h('span', {}, display),
-        h('span', { class: 'aisle-tag muted' }, AISLES.find(a => a.id === aisleForUser(display))?.name || ''),
+        h('span', { class: 'name' }, display),
+        h('span', { class: 'aisle-tag' }, AISLES.find(a => a.id === aisleForUser(display))?.name || ''),
       ),
     ));
   }

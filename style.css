@@ -931,6 +931,58 @@ main {
 .muted { color: var(--olive-text); }
 .hidden-input { display: none; }
 
+/* === Autocomplete suggestions (ajout libre) === */
+.autocomplete {
+  display: flex;
+  flex-direction: column;
+  margin: 6px 0 14px;
+  border: 1px solid var(--card-edge);
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--card);
+}
+.autocomplete:empty {
+  display: none;
+}
+.autocomplete-item {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--card-edge);
+  text-align: left;
+  font-family: var(--serif-body);
+  font-size: 16px;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.autocomplete-item:last-child {
+  border-bottom: 0;
+}
+.autocomplete-item:hover,
+.autocomplete-item:focus-visible {
+  background: rgba(196, 74, 42, 0.06);
+  outline: none;
+}
+.autocomplete-item .emoji {
+  font-size: 20px;
+  line-height: 1;
+  text-align: center;
+}
+.autocomplete-item .aisle-tag {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--olive-text);
+  white-space: nowrap;
+}
+
 .update-banner {
   position: sticky;
   top: 0;
