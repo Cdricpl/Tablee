@@ -1,0 +1,12 @@
+{
+  "name": "tablee",
+  "version": "1.0.0",
+  "description": "Bibliothèque de recettes, planning de la semaine et liste de courses.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "serve": "python3 -m http.server 8000",
+    "test": "node --test data.test.js",
+    "lint": "eslint ."
+  }
+}

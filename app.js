@@ -1,6 +1,6 @@
 import {
   AISLES, CATEGORIES, UNITS, SEED_RECIPES, INGREDIENT_DB,
-  aisleFor, emojiFor, defaultUnitFor, normalizeIngredient, aisleEmojiOf,
+  aisleFor, defaultUnitFor, normalizeIngredient, aisleEmojiOf,
 } from './data.js';
 
 import { llmMatchOrCreate, llmExtractFromFile, hasApiKey, getApiKey, setApiKey } from './llm.js';
@@ -456,14 +456,6 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal()
 $('#modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
 
 // === ACTIONS ===
-function addToWeek(recipeId, portions) {
-  for (const day of state.week) {
-    if (!day.lunch) { day.lunch = { recipeId, portions }; persist(); closeModal(); toast('Ajouté au menu'); render(); return; }
-    if (!day.dinner) { day.dinner = { recipeId, portions }; persist(); closeModal(); toast('Ajouté au menu'); render(); return; }
-  }
-  toast('La semaine est complète');
-}
-
 // Ouvre un petit sélecteur pour choisir le jour et le slot (lunch/dinner), puis ajoute la recette
 function chooseAndAddToWeek(recipeId, portions, defaults = {}) {
   const dayDefault = defaults.dayIdx != null ? defaults.dayIdx : 0;
@@ -1092,7 +1084,7 @@ function detectPortions(text) {
   return m ? +m[1] : null;
 }
 
-function openMenuLibre(opts = {}) {
+function openMenuLibre(_opts = {}) {
   state.modal = { type: 'menulibre' };
   $('#modal').hidden = false;
 
@@ -1200,24 +1192,6 @@ function openMenuLibre(opts = {}) {
     );
   }
 
-  function addThis(r) {
-    let id = r.id;
-    const existing = state.recipes.find(x => x.id === id);
-    if (!existing) {
-      const newRec = { ...r, id: newId(r.name), source: 'user' };
-      delete newRec.matchedExisting;
-      state.recipes.push(newRec);
-      id = newRec.id;
-    }
-    const p = portions || r.portions;
-    if (opts.dayIdx != null) {
-      state.week[opts.dayIdx][opts.slot] = { recipeId: id, portions: p };
-      persist(); closeModal(); render(); toast('Ajouté au menu');
-    } else {
-      addToWeek(id, p);
-    }
-  }
-
   async function callLlm(opts = {}) {
     if (!input.trim() || !hasApiKey()) return;
     busy = true; error = null; llmResult = null; refresh();
@@ -1229,20 +1203,6 @@ function openMenuLibre(opts = {}) {
     } finally {
       busy = false; refresh();
     }
-  }
-
-  function downloadJson(obj) {
-    try {
-      const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = (obj.id || 'recette-ia') + '.json';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    } catch (e) { console.error('Export JSON failed', e); }
   }
 
   $('#modal').append(h('div', { class: 'modal-card' },
