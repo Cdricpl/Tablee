@@ -5,6 +5,10 @@ import {
 
 import { llmMatchOrCreate, llmExtractFromFile, hasApiKey, getApiKey, setApiKey } from './llm.js';
 
+import {
+  slug, newId, fmtTime, cap, formatQty, localMatch, detectPortions,
+} from './pure.js';
+
 // === STATE ===
 const STORAGE_KEY = 'tablee.v1';
 const USER_AISLES_KEY = 'tablee.userAisles';
@@ -12,11 +16,6 @@ const USER_AISLES_KEY = 'tablee.userAisles';
 const DAYS_FR = ['Lun.', 'Mar.', 'Mer.', 'Jeu.', 'Ven.', 'Sam.', 'Dim.'];
 const DAYS_FR_LONG = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 const SLOT_LABEL = { lunch: 'Déjeuner', dinner: 'Dîner' };
-
-const STOPWORDS = new Set([
-  'pour','avec','sans','de','du','des','et','ou','la','le','les','un','une',
-  'personnes','personne','pers','aux','au','en','a','à','la','les',
-]);
 
 const todayJS = new Date().getDay();
 const dayLabel = (todayJS === 0 ? 'Dimanche' : DAYS_FR_LONG[todayJS - 1]).toUpperCase();
@@ -137,12 +136,6 @@ const h = (tag, attrs = {}, ...children) => {
 const catById = id => CATEGORIES.find(c => c.id === id);
 const recipeById = id => state.recipes.find(r => r.id === id);
 
-const slug = s => s.toLowerCase()
-  .normalize('NFD').replace(/[̀-ͯ]/g, '')
-  .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-
-const newId = name => slug(name) + '-' + Math.random().toString(36).slice(2, 7);
-
 function toast(msg) {
   const t = $('#toast');
   t.textContent = msg;
@@ -150,10 +143,6 @@ function toast(msg) {
   clearTimeout(toast._t);
   toast._t = setTimeout(() => { t.hidden = true; }, 2200);
 }
-
-const fmtTime = m => `${m} MIN`;
-
-const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 
 // === ICONS ===
 const icon = {
@@ -876,12 +865,6 @@ function aisleBlock(aisle, items) {
   );
 }
 
-function formatQty(q) {
-  if (q >= 100) return Math.round(q).toString();
-  if (q >= 10) return (Math.round(q * 10) / 10).toString();
-  return (Math.round(q * 100) / 100).toString();
-}
-
 function removeShoppingItem(key) {
   if (!state.shopping.removed.includes(key)) state.shopping.removed.push(key);
   state.shopping.manual = state.shopping.manual.filter(it =>
@@ -1065,26 +1048,7 @@ function exportPDF() {
   w.document.close();
 }
 
-// === MENU LIBRE (local-first) ===
-function localMatch(input, recipes, max = 3) {
-  const tokens = normalizeIngredient(input).split(' ')
-    .filter(t => t.length > 2 && !STOPWORDS.has(t));
-  if (tokens.length === 0) return [];
-  const scored = recipes.map(r => {
-    const norm = normalizeIngredient(r.name + ' ' + r.ingredients.map(i => i.name).join(' '));
-    let score = 0;
-    for (const t of tokens) if (norm.includes(t)) score++;
-    return { r, score };
-  }).filter(x => x.score > 0).sort((a, b) => b.score - a.score);
-  return scored.slice(0, max).map(x => x.r);
-}
-
-function detectPortions(text) {
-  const m = text.match(/(\d+)\s*(?:pers|personne)/i);
-  return m ? +m[1] : null;
-}
-
-function openMenuLibre(_opts = {}) {
+function openMenuLibre(opts = {}) {
   state.modal = { type: 'menulibre' };
   $('#modal').hidden = false;
 
@@ -1186,7 +1150,7 @@ function openMenuLibre(_opts = {}) {
             id = newRec.id;
             persist();
           }
-          chooseAndAddToWeek(id, finalPortions);
+          chooseAndAddToWeek(id, finalPortions, { dayIdx: opts.dayIdx, slot: opts.slot });
         } }, '+ Au menu'),
       ),
     );
