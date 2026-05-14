@@ -13,6 +13,9 @@
   --olive: #8a9876;
   --olive-dim: #b3b89e;
   --khaki: #a89b6b;
+  /* Texte secondaire sur fond clair (cream/card) — passe WCAG AA (ratio ≥ 4.6).
+     --olive reste pour les fonds sombres (header, etc.) où il est lisible. */
+  --olive-text: #5d6a49;
   --paper-shadow: 0 1px 0 rgba(28, 42, 29, 0.04), 0 6px 18px rgba(28, 42, 29, 0.06);
   --serif: "DM Serif Display", "Cormorant Garamond", Georgia, serif;
   --serif-body: "Cormorant Garamond", Georgia, serif;
@@ -175,7 +178,7 @@ main {
   font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 0.18em;
-  color: var(--olive);
+  color: var(--olive-text);
   text-transform: uppercase;
   margin: 0 0 18px;
 }
@@ -268,7 +271,7 @@ main {
   position: absolute;
   left: 0; top: 50%;
   transform: translateY(-50%);
-  color: var(--olive);
+  color: var(--olive-text);
   pointer-events: none;
 }
 
@@ -306,7 +309,7 @@ main {
 .cat-btn .cat-count {
   font-family: var(--mono);
   font-size: 10px;
-  color: var(--olive);
+  color: var(--olive-text);
   letter-spacing: 0.08em;
   margin-top: 2px;
 }
@@ -358,7 +361,7 @@ main {
   font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 0.12em;
-  color: var(--olive);
+  color: var(--olive-text);
 }
 
 .card-title {
@@ -383,7 +386,7 @@ main {
   font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 0.12em;
-  color: var(--olive);
+  color: var(--olive-text);
   text-transform: uppercase;
 }
 .card-foot .meta {
@@ -398,13 +401,13 @@ main {
   text-transform: none;
   letter-spacing: 0;
   font-size: 13px;
-  color: var(--olive);
+  color: var(--olive-text);
 }
 
 .empty {
   text-align: center;
   padding: 40px 20px;
-  color: var(--olive);
+  color: var(--olive-text);
   font-family: var(--serif-body);
   font-style: italic;
   font-size: 18px;
@@ -489,7 +492,7 @@ main {
   font-size: 12px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--olive);
+  color: var(--olive-text);
 }
 
 .portions {
@@ -594,7 +597,7 @@ main {
   font-family: var(--mono);
   font-size: 10px;
   letter-spacing: 0.18em;
-  color: var(--olive);
+  color: var(--olive-text);
   text-transform: uppercase;
   display: block;
   margin-bottom: 4px;
@@ -718,7 +721,7 @@ main {
   font-family: var(--mono);
   font-size: 10px;
   letter-spacing: 0.18em;
-  color: var(--olive);
+  color: var(--olive-text);
   text-transform: uppercase;
 }
 .week-day .name {
@@ -781,7 +784,7 @@ main {
   font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 0.12em;
-  color: var(--olive);
+  color: var(--olive-text);
   text-transform: uppercase;
   margin-bottom: 8px;
 }
@@ -818,7 +821,7 @@ main {
   width: 26px; height: 26px;
   border-radius: 50%;
   background: rgba(28, 42, 29, 0.06);
-  color: var(--olive);
+  color: var(--olive-text);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -925,7 +928,7 @@ main {
 
 /* utilities */
 .row-spread { display: flex; justify-content: space-between; align-items: center; }
-.muted { color: var(--olive); }
+.muted { color: var(--olive-text); }
 .hidden-input { display: none; }
 
 .update-banner {
