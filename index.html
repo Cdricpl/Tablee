@@ -36,11 +36,47 @@
   <div id="modal" class="modal" hidden></div>
   <div id="toast" class="toast" hidden></div>
 
+  <div id="updateBanner" class="update-banner" hidden>
+    Une nouvelle version de Tablée est disponible.
+    <button type="button" id="updateBannerBtn">Recharger</button>
+  </div>
+
   <script type="module" src="app.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch(() => {});
+      window.addEventListener('load', async () => {
+        try {
+          const reg = await navigator.serviceWorker.register('sw.js');
+
+          const showBanner = sw => {
+            const b = document.getElementById('updateBanner');
+            const btn = document.getElementById('updateBannerBtn');
+            if (!b || !btn) return;
+            b.hidden = false;
+            btn.onclick = () => {
+              sw.postMessage({ type: 'SKIP_WAITING' });
+            };
+          };
+
+          if (reg.waiting && navigator.serviceWorker.controller) showBanner(reg.waiting);
+
+          reg.addEventListener('updatefound', () => {
+            const nw = reg.installing;
+            if (!nw) return;
+            nw.addEventListener('statechange', () => {
+              if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+                showBanner(nw);
+              }
+            });
+          });
+
+          let reloading = false;
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (reloading) return;
+            reloading = true;
+            window.location.reload();
+          });
+        } catch (_) {}
       });
     }
   </script>

@@ -1,5 +1,5 @@
 // sw.js — service worker minimal pour Tablée (cache offline)
-const CACHE = 'tablee-v2';
+const CACHE = 'tablee-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -21,7 +21,12 @@ const CACHEABLE_THIRD_PARTY = [
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
-  self.skipWaiting();
+  // Ne plus appeler skipWaiting automatiquement : l'utilisateur choisit
+  // quand recharger via le bandeau de mise à jour.
+});
+
+self.addEventListener('message', e => {
+  if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('activate', e => {

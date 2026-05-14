@@ -928,6 +928,36 @@ main {
 .muted { color: var(--olive); }
 .hidden-input { display: none; }
 
+.update-banner {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--ink, #1c2a1d);
+  color: var(--cream, #f3e8d0);
+  padding: 10px 14px;
+  font-family: var(--serif-body);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.update-banner button {
+  background: var(--terra, #c44a2a);
+  color: var(--cream, #f3e8d0);
+  border: 0;
+  padding: 6px 14px;
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.update-banner button:focus-visible {
+  outline: 2px solid var(--cream, #f3e8d0);
+  outline-offset: 2px;
+}
+
 .callout {
   border-left: 3px solid var(--terra);
   background: rgba(196, 74, 42, 0.06);

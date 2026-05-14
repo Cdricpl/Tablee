@@ -77,15 +77,34 @@ function emojiForUser(name) {
   return aisleEmojiOf(aisleForUser(name));
 }
 
-function persist() {
+function persistNow() {
   const toSave = {
     recipes: state.recipes.filter(r => r.source !== 'seed' || r._edited),
     week: state.week,
     shopping: state.shopping,
     view: state.view,
   };
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+  } catch (e) {
+    console.error('persist failed', e);
+  }
 }
+
+let _persistTimer = null;
+function persist() {
+  clearTimeout(_persistTimer);
+  _persistTimer = setTimeout(() => { _persistTimer = null; persistNow(); }, 250);
+}
+
+window.addEventListener('beforeunload', () => {
+  if (_persistTimer) { clearTimeout(_persistTimer); _persistTimer = null; persistNow(); }
+});
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden' && _persistTimer) {
+    clearTimeout(_persistTimer); _persistTimer = null; persistNow();
+  }
+});
 
 // === HELPERS ===
 const $ = sel => document.querySelector(sel);
@@ -1164,7 +1183,7 @@ function openMenuLibre(opts = {}) {
           if (r.id && state.recipes.find(x => x.id === r.id)) openRecipe(r.id, { portions: finalPortions });
           else openRecipeObject(r, { portions: finalPortions });
         } }, 'Voir'),
-        fromLLM ? h('button', { class: 'btn', onclick: () => { busy = true; refresh(); callLlm(); } }, 'Générer une autre') : null,
+        fromLLM ? h('button', { class: 'btn', onclick: () => { busy = true; refresh(); callLlm({ skipCache: true }); } }, 'Générer une autre') : null,
         h('button', { class: 'btn primary', onclick: () => {
           let id = r.id;
           const existing = state.recipes.find(x => x.id === id);
@@ -1199,11 +1218,11 @@ function openMenuLibre(opts = {}) {
     }
   }
 
-  async function callLlm() {
+  async function callLlm(opts = {}) {
     if (!input.trim() || !hasApiKey()) return;
     busy = true; error = null; llmResult = null; refresh();
     try {
-      llmResult = await llmMatchOrCreate(input, state.recipes);
+      llmResult = await llmMatchOrCreate(input, state.recipes, opts);
       try { localStorage.setItem('tablee.lastAI', JSON.stringify(llmResult)); } catch (_) {}
     } catch (err) {
       error = err.message || 'Erreur IA';
