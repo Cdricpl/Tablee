@@ -32,14 +32,14 @@ export const state = (() => {
         ...defaultState(),
         ...saved,
         recipes: [...SEED_RECIPES.map(r => ({ ...r, source: 'seed' })), ...userRecipes],
-        view: saved.view || 'library',
+        view: 'library',
         filter: { cat: null, q: '' },
       };
     } else if (saved && saved.shopping) {
       return {
         ...defaultState(),
         shopping: saved.shopping,
-        view: saved.view || 'library',
+        view: 'library',
       };
     }
   } catch (_) {}
@@ -72,11 +72,11 @@ export function emojiForUser(name) {
 }
 
 export function persistNow() {
+  // view n'est volontairement pas persisté : l'app ouvre toujours sur Recettes.
   const toSave = {
     recipes: state.recipes.filter(r => r.source !== 'seed' || r._edited),
     week: state.week,
     shopping: state.shopping,
-    view: state.view,
   };
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
