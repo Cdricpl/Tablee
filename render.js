@@ -8,15 +8,19 @@ export function setMastheadDay() {
   $('#issueDay').textContent = dayLabel;
 }
 
+function syncTabs() {
+  document.querySelectorAll('.tab').forEach(t =>
+    t.setAttribute('aria-selected', t.dataset.view === state.view ? 'true' : 'false'));
+}
+
 export function setView(v) {
   state.view = v;
-  document.querySelectorAll('.tab').forEach(t =>
-    t.setAttribute('aria-selected', t.dataset.view === v ? 'true' : 'false'));
   render();
 }
 
 export function render() {
   setMastheadDay();
+  syncTabs();
   const app = $('#app');
   app.replaceChildren();
   if (state.view === 'library') app.append(viewLibrary());
