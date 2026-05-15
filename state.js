@@ -125,7 +125,9 @@ export function computeShopping() {
       if (!m) continue;
       const r = recipeById(m.recipeId);
       if (!r) continue;
-      const factor = m.portions / r.portions;
+      // Garde-fou : r.portions à 0 donnerait Infinity → quantités NaN.
+      const basePortions = r.portions > 0 ? r.portions : 1;
+      const factor = (m.portions || basePortions) / basePortions;
       for (const ing of r.ingredients) {
         addItem(ing.name, ing.qty * factor, ing.unit);
       }

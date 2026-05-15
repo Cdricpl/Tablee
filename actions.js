@@ -61,6 +61,11 @@ export function exportPDF() {
   for (const it of items) byAisle.get(it.aisle)?.push(it);
   const usedAisles = AISLES.filter(a => byAisle.get(a.id).length > 0);
 
+  // Échappe les caractères HTML pour empêcher l'injection via les noms
+  // d'ingrédients (saisis par l'utilisateur ou générés par le LLM).
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
   const w = window.open('', '_blank');
   if (!w) { toast('Impression bloquée'); return; }
   w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Mes courses · Tablée</title>
@@ -76,8 +81,8 @@ export function exportPDF() {
   </style></head><body>
   <h1>Mes courses</h1>
   <div class="meta">${items.length} ingrédients · ${usedAisles.length} rayons · Tablée</div>
-  ${usedAisles.map(a => `<h2>${a.emoji} ${a.name}</h2><ul>${
-    byAisle.get(a.id).map(it => `<li><span>${it.name}</span><span class="qty">${formatQty(it.qty)} ${it.unit}</span></li>`).join('')
+  ${usedAisles.map(a => `<h2>${esc(a.emoji)} ${esc(a.name)}</h2><ul>${
+    byAisle.get(a.id).map(it => `<li><span>${esc(it.name)}</span><span class="qty">${esc(formatQty(it.qty))} ${esc(it.unit)}</span></li>`).join('')
   }</ul>`).join('')}
   <script>window.onload=()=>setTimeout(()=>window.print(),200)</script>
   </body></html>`);

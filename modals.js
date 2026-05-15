@@ -193,6 +193,8 @@ export function chooseAndAddToWeek(recipeId, portions, defaults = {}) {
 // === EDIT MODAL ===
 export function openEdit(id, prefill) {
   const isNew = !id;
+  const existing = isNew ? null : recipeById(id);
+  if (!isNew && !existing) { toast('Recette introuvable'); return; }
   const r = isNew
     ? (prefill
       ? { id: null, name: prefill.name || '', cat: prefill.cat || 'famille', time: prefill.time || 30, portions: prefill.portions || 4,
@@ -201,9 +203,9 @@ export function openEdit(id, prefill) {
           photo: prefill.photo }
       : { id: null, name: '', cat: 'famille', time: 30, portions: 4,
           ingredients: [{ qty: 0, unit: 'g', name: '' }], steps: [''] })
-    : { ...recipeById(id),
-        ingredients: recipeById(id).ingredients.map(i => ({...i})),
-        steps: [...recipeById(id).steps] };
+    : { ...existing,
+        ingredients: existing.ingredients.map(i => ({...i})),
+        steps: [...existing.steps] };
 
   state.modal = { type: 'edit' };
   $('#modal').hidden = false;

@@ -23,7 +23,7 @@ export function render() {
   syncTabs();
   const app = $('#app');
   app.replaceChildren();
-  if (state.view === 'library') app.append(viewLibrary());
-  else if (state.view === 'week') app.append(viewWeek());
+  if (state.view === 'week') app.append(viewWeek());
   else if (state.view === 'shopping') app.append(viewShopping());
+  else app.append(viewLibrary()); // fallback : library est l'écran par défaut
 }
