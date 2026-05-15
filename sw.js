@@ -1,10 +1,17 @@
 // sw.js — service worker minimal pour Tablée (cache offline)
-const CACHE = 'tablee-v3';
+const CACHE = 'tablee-v4';
 const ASSETS = [
   './',
   './index.html',
   './style.css',
   './app.js',
+  './state.js',
+  './dom.js',
+  './render.js',
+  './views.js',
+  './modals.js',
+  './actions.js',
+  './pure.js',
   './data.js',
   './llm.js',
   './manifest.webmanifest',
@@ -54,8 +61,15 @@ self.addEventListener('fetch', e => {
   // Hors origine et hors liste tierce autorisée : laisser passer
   if (url.origin !== location.origin) return;
 
-  // Fichiers applicatifs : network-first (compare en endsWith pour supporter les sous-chemins)
-  const networkFirst = ['/app.js', '/data.js', '/llm.js', '/index.html'];
+  // Fichiers applicatifs : network-first (compare en endsWith pour supporter les sous-chemins).
+  // Tous les modules JS et le CSS — sinon les corrections ne se propagent jamais sur les
+  // appareils déjà installés (cache-first les figerait).
+  const networkFirst = [
+    '/app.js', '/state.js', '/dom.js', '/render.js',
+    '/views.js', '/modals.js', '/actions.js', '/pure.js',
+    '/data.js', '/llm.js',
+    '/index.html', '/style.css',
+  ];
   const isAppFile =
     networkFirst.some(p => url.pathname.endsWith(p)) ||
     url.pathname === '/' ||

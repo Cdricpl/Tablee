@@ -67,3 +67,25 @@ export const icon = {
 // Listeners globaux : Échap et click-outside ferment la modale.
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 $('#modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+
+// Sauvegarde/restauration du scroll de la vue sous-jacente quand une modale s'ouvre/ferme.
+// La modale est position:fixed inset:0 — sur mobile certains navigateurs perdent la
+// position de scroll du body. On la mémorise dès que #modal devient visible et on la
+// restaure dès qu'il se cache. MutationObserver = un seul point d'instrumentation pour
+// toutes les modales, sans toucher à modals.js.
+let _savedScrollY = 0;
+{
+  const modalEl = $('#modal');
+  let prevHidden = modalEl.hidden;
+  new MutationObserver(() => {
+    const nowHidden = modalEl.hidden;
+    if (prevHidden && !nowHidden) {
+      // Ouverture : capturer le scroll actuel.
+      _savedScrollY = window.scrollY || window.pageYOffset || 0;
+    } else if (!prevHidden && nowHidden) {
+      // Fermeture : restaurer.
+      window.scrollTo({ top: _savedScrollY, behavior: 'instant' });
+    }
+    prevHidden = nowHidden;
+  }).observe(modalEl, { attributes: true, attributeFilter: ['hidden'] });
+}

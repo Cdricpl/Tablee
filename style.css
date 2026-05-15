@@ -837,16 +837,19 @@ main {
   background: var(--card);
   border: 1px solid var(--card-edge);
   border-radius: 3px;
-  padding: 12px 10px;
+  padding: 12px 10px 10px;
   text-align: center;
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
 }
-.aisle-item .emoji { font-size: 30px; line-height: 1; display: block; margin-bottom: 6px; }
+.aisle-item .emoji { font-size: 30px; line-height: 1; }
 .aisle-item .name {
   font-family: var(--serif);
   font-size: 16px;
   color: var(--ink);
-  margin-bottom: 6px;
+  margin: 2px 0 4px;
 }
 .aisle-item .qty-pill {
   display: inline-block;
@@ -856,16 +859,33 @@ main {
   font-size: 11px;
   padding: 2px 8px;
   border-radius: 2px;
-  margin-bottom: 4px;
 }
+/* Barre d'actions en bas — les deux boutons côte à côte, alignés à droite. */
+.aisle-item .aisle-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 8px;
+  width: 100%;
+}
+.aisle-item .aisle-edit,
 .aisle-item .x {
-  position: absolute;
-  bottom: 8px; right: 8px;
   background: transparent;
-  border: none;
-  color: var(--terra);
+  border: 1px solid var(--card-edge);
+  border-radius: 3px;
+  width: 30px; height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: 14px;
+  color: var(--olive-text);
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
 }
+.aisle-item .x { color: var(--terra); font-size: 16px; }
+.aisle-item .aisle-edit:hover,
+.aisle-item .x:hover { background: rgba(28, 42, 29, 0.05); }
 
 .add-bar {
   border: 1px dashed rgba(28, 42, 29, 0.35);

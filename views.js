@@ -99,6 +99,11 @@ export function viewLibrary() {
           if (inp) inp.value = '';
           refreshCatButtons();
           refreshResults();
+          if (state.filter.cat) {
+            // Laisse le DOM se mettre à jour avant le scroll, sinon le calcul de
+            // position est faux quand on passe d'aucune catégorie à une catégorie.
+            setTimeout(() => resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
+          }
         },
       },
         h('span', { class: 'cat-emoji' }, c.emoji),
@@ -250,9 +255,11 @@ function aisleBlock(aisle, items) {
         h('span', { class: 'emoji' }, it.emoji),
         h('div', { class: 'name' }, it.name),
         h('div', { class: 'qty-pill' }, `${formatQty(it.qty)} ${it.unit}`),
-        h('button', { class: 'aisle-edit', title: 'Changer le rayon',
-          onclick: () => openAisleChooser(it) }, '⇄'),
-        h('button', { class: 'x', onclick: () => removeShoppingItem(it.key), title: 'Retirer' }, '×'),
+        h('div', { class: 'aisle-actions' },
+          h('button', { class: 'aisle-edit', title: 'Changer le rayon',
+            onclick: () => openAisleChooser(it) }, '⇄'),
+          h('button', { class: 'x', onclick: () => removeShoppingItem(it.key), title: 'Retirer' }, '×'),
+        ),
       )),
     ),
   );

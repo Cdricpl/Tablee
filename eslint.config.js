@@ -19,6 +19,7 @@ export default [
         FileReader: 'readonly',
         FormData: 'readonly',
         DOMParser: 'readonly',
+        MutationObserver: 'readonly',
         confirm: 'readonly',
         alert: 'readonly',
         prompt: 'readonly',
