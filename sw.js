@@ -1,5 +1,5 @@
 // sw.js — service worker minimal pour Tablée (cache offline)
-const CACHE = 'tablee-v16';
+const CACHE = 'tablee-v17';
 const ASSETS = [
   './',
   './index.html',
@@ -28,12 +28,33 @@ const CACHEABLE_THIRD_PARTY = [
 ];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
-  // Activation immédiate du nouveau SW — pas d'attente du bandeau utilisateur.
-  // Le bandeau dans index.html reste comme filet de sécurité si jamais
-  // controllerchange tarde.
-  self.skipWaiting();
+  e.waitUntil(install());
 });
+
+// Précache best-effort, puis activation immédiate.
+//
+// cache.addAll() est atomique : une seule ressource en échec — 404, coupure
+// réseau d'une seconde, 5xx du CDN — rejetait l'installation *entière*. Le
+// service worker restait alors sur l'ancienne version jusqu'à la prochaine
+// vérification de mise à jour, et l'appareil pouvait se figer des semaines sur
+// une version périmée. Chaque ressource est désormais mise en cache
+// indépendamment : l'installation aboutit même si une partie échoue, quitte à
+// avoir un cache hors-ligne incomplet. C'est sans conséquence en ligne, la
+// stratégie de fetch étant network-first pour les fichiers applicatifs.
+async function install() {
+  const cache = await caches.open(CACHE);
+  const results = await Promise.allSettled(
+    // cache: 'reload' court-circuite le cache HTTP du navigateur : sans lui on
+    // risque de « précacher » la version périmée qu'on cherche à remplacer.
+    ASSETS.map(url => cache.add(new Request(url, { cache: 'reload' }))),
+  );
+  const failed = results.filter(r => r.status === 'rejected').length;
+  if (failed) {
+    console.warn(`[sw] ${CACHE} : ${failed}/${ASSETS.length} ressources non précachées, installation poursuivie`);
+  }
+  // Pas d'attente du bandeau utilisateur : le nouveau SW prend la main.
+  await self.skipWaiting();
+}
 
 self.addEventListener('message', e => {
   if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();

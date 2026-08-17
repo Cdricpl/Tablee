@@ -31,6 +31,8 @@ export default [
         // PWA / SW
         self: 'readonly',
         caches: 'readonly',
+        Request: 'readonly',
+        Response: 'readonly',
         // Tests Node
         process: 'readonly',
       },

@@ -43,25 +43,34 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', async () => {
         try {
-          const reg = await navigator.serviceWorker.register('sw.js');
+          // updateViaCache: 'none' — ni sw.js ni ses imports ne sont servis
+          // depuis le cache HTTP, sinon la vérification de mise à jour peut
+          // comparer le nouveau worker à une copie périmée.
+          const reg = await navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' });
+
+          const hadController = !!navigator.serviceWorker.controller;
+          const apply = sw => sw.postMessage({ type: 'SKIP_WAITING' });
 
           const showBanner = sw => {
             const b = document.getElementById('updateBanner');
             const btn = document.getElementById('updateBannerBtn');
             if (!b || !btn) return;
             b.hidden = false;
-            btn.onclick = () => {
-              sw.postMessage({ type: 'SKIP_WAITING' });
-            };
+            btn.onclick = () => apply(sw);
           };
 
-          if (reg.waiting && navigator.serviceWorker.controller) showBanner(reg.waiting);
+          // Un worker déjà installé mais en attente est appliqué tout de suite.
+          // Le laisser dépendre d'un clic sur le bandeau pouvait figer un
+          // appareil sur une version périmée : une PWA installée n'est jamais
+          // vraiment fermée, donc l'attente ne se termine pas d'elle-même.
+          if (reg.waiting) { apply(reg.waiting); showBanner(reg.waiting); }
 
           reg.addEventListener('updatefound', () => {
             const nw = reg.installing;
             if (!nw) return;
             nw.addEventListener('statechange', () => {
               if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+                apply(nw);
                 showBanner(nw);
               }
             });
@@ -69,7 +78,10 @@
 
           let reloading = false;
           navigator.serviceWorker.addEventListener('controllerchange', () => {
-            if (reloading) return;
+            // Première installation : clients.claim() déclenche l'évènement
+            // alors qu'il n'y a rien à remplacer. Recharger ferait clignoter
+            // l'app sans raison.
+            if (!hadController || reloading) return;
             reloading = true;
             window.location.reload();
           });
