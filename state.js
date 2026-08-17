@@ -18,9 +18,14 @@ export const defaultState = () => ({
   recipes: SEED_RECIPES.map(r => ({ ...r, source: 'seed' })),
   week: Array.from({ length: 7 }, (_, i) => ({ day: i, lunch: null, dinner: null })),
   shopping: { manual: [], removed: [], checked: [] },
+  favorites: [],
+  toTry: [],
   view: 'library',
   filter: { cat: null, q: '' },
 });
+
+// Les vues atteignables depuis la barre du bas ou les onglets.
+export const VIEWS = ['library', 'week', 'shopping', 'favorites', 'totry', 'search', 'more'];
 
 export const state = (() => {
   try {
@@ -32,6 +37,8 @@ export const state = (() => {
         ...defaultState(),
         ...saved,
         recipes: [...SEED_RECIPES.map(r => ({ ...r, source: 'seed' })), ...userRecipes],
+        favorites: Array.isArray(saved.favorites) ? saved.favorites : [],
+        toTry: Array.isArray(saved.toTry) ? saved.toTry : [],
         view: 'library',
         filter: { cat: null, q: '' },
       };
@@ -77,6 +84,8 @@ export function persistNow() {
     recipes: state.recipes.filter(r => r.source !== 'seed' || r._edited),
     week: state.week,
     shopping: state.shopping,
+    favorites: state.favorites,
+    toTry: state.toTry,
   };
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));

@@ -1075,3 +1075,487 @@ main {
   line-height: 1.45;
   color: var(--ink);
 }
+
+/* ==========================================================================
+   REFONTE — maquette 2026 : cloche, recherche en pilule, cartes catégorie
+   photo, semaine compacte, courses cochables, barre de navigation basse.
+   ========================================================================== */
+
+/* --- Cloche du bandeau --- */
+.masthead-top { position: relative; }
+.masthead-bell {
+  position: absolute;
+  right: 0; top: 50%;
+  transform: translateY(-50%);
+  margin-top: -6px;
+  background: none;
+  border: none;
+  padding: 4px;
+  color: var(--khaki);
+  cursor: pointer;
+  line-height: 0;
+}
+.masthead-bell:hover { color: var(--cream); }
+
+/* --- Zone principale : place pour la barre du bas --- */
+main { padding-bottom: 132px; }
+.tabs[hidden] { display: none; }
+
+/* --- Recherche en pilule --- */
+.search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--card);
+  border: 1px solid var(--card-edge);
+  border-radius: 999px;
+  padding: 4px 14px;
+  margin-bottom: 14px;
+  box-shadow: var(--paper-shadow);
+}
+.search input {
+  flex: 1;
+  border-bottom: none;
+  padding: 10px 0;
+  font-size: 17px;
+}
+.search input:focus { border-bottom-color: transparent; }
+.search-icon {
+  position: static;
+  transform: none;
+  display: flex;
+}
+.search-filter {
+  background: none;
+  border: none;
+  padding: 4px;
+  color: var(--olive-text);
+  cursor: pointer;
+  line-height: 0;
+}
+.search-filter:hover { color: var(--terra); }
+
+/* --- Bouton pleine largeur --- */
+.btn.block {
+  display: flex;
+  width: 100%;
+  flex: none;
+  margin-bottom: 14px;
+  padding: 15px 14px;
+}
+
+/* --- Cartes catégorie avec photo --- */
+.cat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin: 4px 0 22px;
+}
+.cat-card {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  text-align: left;
+  background: var(--card);
+  border: 1px solid var(--card-edge);
+  border-radius: 4px;
+  box-shadow: var(--paper-shadow);
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+}
+.cat-card:hover { transform: translateY(-1px); }
+.cat-card[data-active="true"] {
+  border-color: var(--terra);
+  box-shadow: 0 0 0 1px var(--terra), var(--paper-shadow);
+}
+.cat-photo {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  /* Repli quand img/cat-<id>.jpg n'existe pas encore. */
+  background: linear-gradient(150deg, #e7dcc0 0%, #d8ccab 55%, #cbbf9c 100%);
+}
+.cat-photo img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.cat-photo-emoji {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  opacity: 0.75;
+}
+/* Dès qu'une photo est chargée, elle recouvre l'emoji de repli. */
+.cat-photo img + .cat-photo-emoji { display: none; }
+.cat-body { display: block; padding: 10px 12px 12px; }
+.cat-name {
+  display: block;
+  font-family: var(--serif);
+  font-size: 18px;
+  color: var(--ink);
+  line-height: 1.15;
+}
+.cat-count {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--serif-body);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--olive-text);
+}
+
+/* --- Carte recette : cœur + drapeau « à vérifier » --- */
+.card-fav {
+  background: none;
+  border: none;
+  padding: 2px;
+  color: var(--olive-text);
+  cursor: pointer;
+  line-height: 0;
+}
+.card-fav[data-on="true"] { color: var(--terra); }
+.card-flag {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 2px 8px;
+  border: 1px solid rgba(196, 74, 42, 0.4);
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--terra);
+}
+.btn-ghost.fav[data-on="true"] { color: var(--terra); }
+
+/* --- Résultats filtrés --- */
+.results-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* --- Semaine compacte --- */
+.week-list { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+.week-row {
+  display: grid;
+  grid-template-columns: 54px 16px 1fr 1fr 24px;
+  align-items: center;
+  gap: 6px;
+  background: var(--card);
+  border: 1px solid var(--card-edge);
+  border-radius: 4px;
+  padding: 10px 8px 10px 12px;
+  box-shadow: var(--paper-shadow);
+}
+.week-daycell { display: flex; flex-direction: column; gap: 1px; }
+.week-dayname {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.week-daynum {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--olive-text);
+}
+.week-sun { color: var(--khaki); display: flex; justify-content: center; }
+.week-slot { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.week-slot-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: var(--terra);
+}
+.week-slot-empty,
+.week-slot-name {
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--serif-body);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--ink-soft);
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.week-slot-name { font-style: normal; color: var(--ink); }
+.week-slot-empty:hover, .week-slot-name:hover { color: var(--terra); }
+.week-slot-meta {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--olive-text);
+}
+.week-more {
+  background: none;
+  border: none;
+  padding: 4px;
+  color: var(--olive-text);
+  cursor: pointer;
+  line-height: 0;
+}
+.week-more:hover { color: var(--terra); }
+
+/* --- Menu du jour --- */
+.daymenu-slot { padding: 4px 0 8px; }
+.daymenu-name { font-family: var(--serif); font-size: 21px; margin: 2px 0 4px; }
+
+/* --- Courses : cases à cocher --- */
+.aisle-wrap { margin-bottom: 8px; }
+.aisle-item { position: relative; }
+.aisle-item[data-checked="true"] { opacity: 0.5; }
+.aisle-item[data-checked="true"] .name { text-decoration: line-through; }
+.aisle-check {
+  position: absolute;
+  top: 6px; left: 6px;
+  width: 22px; height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--card-edge);
+  border-radius: 50%;
+  background: var(--cream-warm);
+  color: var(--terra);
+  cursor: pointer;
+  padding: 0;
+}
+.aisle-check[data-on="true"] { border-color: var(--terra); }
+
+/* --- Barre collante des courses --- */
+.shop-bar {
+  position: fixed;
+  left: 12px; right: 12px;
+  bottom: 76px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--ink-deep);
+  color: var(--cream);
+  border-radius: 4px;
+  box-shadow: 0 8px 24px rgba(28, 42, 29, 0.25);
+}
+.shop-bar-count {
+  display: flex;
+  flex-direction: column;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1.4;
+}
+.shop-bar-count strong { font-size: 13px; color: #fff; }
+.shop-bar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  border-left: 1px solid rgba(243, 232, 208, 0.25);
+  padding: 4px 0 4px 14px;
+  color: var(--cream);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.shop-bar-btn:hover { color: #fff; }
+
+/* --- Barre de navigation basse --- */
+.bottom-nav {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 30;
+  display: flex;
+  background: var(--cream-warm);
+  border-top: 1px solid var(--card-edge);
+  padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+}
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  padding: 6px 2px;
+  color: var(--olive-text);
+  cursor: pointer;
+  line-height: 1;
+}
+.nav-item[aria-current="page"] { color: var(--terra); }
+.nav-label {
+  font-family: var(--serif-body);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+
+/* --- États vides --- */
+.empty-state { text-align: center; padding: 34px 12px 20px; }
+.basket-art { display: block; margin: 0 auto 16px; line-height: 0; }
+.empty-title {
+  font-family: var(--serif);
+  font-size: 21px;
+  color: var(--ink);
+  margin: 0 0 4px;
+}
+.empty-sub {
+  font-family: var(--serif-body);
+  font-size: 17px;
+  color: var(--olive-text);
+  margin: 0;
+  line-height: 1.35;
+}
+
+/* --- Puces de catégorie (recherche) --- */
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 2px 0 14px;
+}
+.chip {
+  background: var(--card);
+  border: 1px solid var(--card-edge);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-family: var(--serif-body);
+  font-size: 14px;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.chip[data-active="true"] {
+  background: var(--terra);
+  border-color: var(--terra);
+  color: #fbf6e9;
+}
+
+/* --- Vue « Plus » --- */
+.more-list { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+.more-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  text-align: left;
+  background: var(--card);
+  border: 1px solid var(--card-edge);
+  border-radius: 4px;
+  padding: 14px 16px;
+  cursor: pointer;
+  box-shadow: var(--paper-shadow);
+}
+.more-row:hover { border-color: var(--olive); }
+.more-ico { color: var(--terra); display: flex; }
+.more-text { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.more-label { font-family: var(--serif); font-size: 18px; color: var(--ink); }
+.more-sub {
+  font-family: var(--serif-body);
+  font-size: 14px;
+  color: var(--olive-text);
+}
+.more-chev { color: var(--olive-text); font-size: 22px; line-height: 1; }
+.more-note {
+  margin-top: 18px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--khaki);
+  background: rgba(168, 155, 107, 0.1);
+  font-family: var(--serif-body);
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+/* --- Notifications --- */
+.notif-list { display: flex; flex-direction: column; gap: 14px; margin: 10px 0 4px; }
+.notif-item { display: flex; gap: 10px; align-items: flex-start; }
+.notif-dot {
+  width: 8px; height: 8px;
+  margin-top: 7px;
+  border-radius: 50%;
+  background: var(--terra);
+  flex: none;
+}
+.notif-dot[data-tone="ok"] { background: var(--olive); }
+.notif-title {
+  font-family: var(--serif);
+  font-size: 17px;
+  color: var(--ink);
+  margin: 0 0 2px;
+}
+.notif-sub {
+  font-family: var(--serif-body);
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--olive-text);
+  margin: 0;
+}
+
+@media (min-width: 620px) {
+  .cat-grid { grid-template-columns: repeat(3, 1fr); }
+  .bottom-nav { padding-left: 12%; padding-right: 12%; }
+}
+
+/* Correctifs de superposition avec la barre du bas.
+   .update-banner déclare display:flex, ce qui écrasait l'attribut [hidden] :
+   la bannière de mise à jour restait affichée et captait les clics. */
+.update-banner[hidden] { display: none; }
+.toast {
+  bottom: 96px;
+  pointer-events: none;
+}
+
+/* Icônes : boîte de taille fixe pour aligner libellés et pictogrammes. */
+.masthead-bell { display: flex; align-items: center; }
+.masthead-bell svg, .nav-item svg { display: block; }
+.nav-item > span:not(.nav-label) {
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Écrans étroits : le soleil décoratif cède la place, et le libellé du plat
+   passe sur deux lignes plutôt que d'être coupé. */
+@media (max-width: 400px) {
+  .week-row { grid-template-columns: 48px 1fr 1fr 22px; gap: 5px; padding-left: 10px; }
+  .week-sun { display: none; }
+  .week-slot-empty,
+  .week-slot-name { white-space: normal; overflow: visible; }
+}
+
+/* Sous 380 px, les libellés de boutons en capitales espacées débordaient :
+   marges et interlettrage resserrés. */
+@media (max-width: 380px) {
+  main { padding-left: 16px; padding-right: 16px; }
+  .btn { font-size: 11px; letter-spacing: 0.1em; padding: 12px 10px; gap: 6px; }
+  .shop-bar { padding: 10px 12px; }
+  .shop-bar-btn { padding-left: 10px; font-size: 10px; }
+}
+
+/* Le toast se place au-dessus de la barre du bas, et remonte encore quand la
+   barre de courses est affichée pour ne pas la recouvrir. */
+body:has(.shop-bar) .toast { bottom: 150px; }

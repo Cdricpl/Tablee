@@ -13,7 +13,10 @@ import {
 import {
   llmMatchOrCreate, llmExtractFromFile, hasApiKey, getApiKey, setApiKey,
 } from './llm.js';
-import { deleteRecipe, exportRecipe, exportData, importData } from './actions.js';
+import {
+  deleteRecipe, exportRecipe, exportData, importData,
+  toggleFavorite, isFavorite, toggleToTry, isToTry, clearSlot,
+} from './actions.js';
 import { render } from './render.js';
 
 // === RECIPE MODAL ===
@@ -39,7 +42,17 @@ export function openRecipe(id, opts = {}) {
       ),
       h('div', { class: 'modal-actions' },
         h('button', { class: 'btn-ghost', onclick: () => chooseAndAddToWeek(r.id, portions) }, '+ Au menu'),
-          r.file ? h('button', { class: 'btn-ghost icon-only', onclick: () => { window.open(r.file, '_blank'); }, title: 'Ouvrir le fichier source' }, icon.download()) : h('button', { class: 'btn-ghost icon-only', onclick: () => exportRecipe(r), title: 'Sauvegarder' }, icon.download()),
+        h('button', {
+          class: 'btn-ghost icon-only fav', 'data-on': isFavorite(r.id) ? 'true' : 'false',
+          title: isFavorite(r.id) ? 'Retirer des favoris' : 'Ajouter aux favoris',
+          onclick: () => { toggleFavorite(r.id); renderModal(); },
+        }, isFavorite(r.id) ? icon.heartFull() : icon.heart()),
+        h('button', {
+          class: 'btn-ghost icon-only fav', 'data-on': isToTry(r.id) ? 'true' : 'false',
+          title: isToTry(r.id) ? 'Retirer de « à tester »' : 'Marquer « à tester »',
+          onclick: () => { toggleToTry(r.id); renderModal(); },
+        }, icon.chefHat()),
+        h('button', { class: 'btn-ghost icon-only', onclick: () => exportRecipe(r), title: 'Sauvegarder' }, icon.download()),
         h('button', { class: 'btn-ghost icon-only', onclick: () => { closeModal(); openEdit(r.id); }, title: 'Modifier' }, icon.edit()),
         h('button', { class: 'btn-ghost icon-only danger', onclick: () => deleteRecipe(r.id), title: 'Supprimer' }, icon.trash()),
       ),
@@ -799,6 +812,117 @@ export function openSettings() {
           onchange: async e => { const f = e.target.files[0]; if (f) await importData(f); },
         }),
       ),
+    ),
+  ));
+}
+
+// === MENU D'UN JOUR DE LA SEMAINE ===
+// Regroupe ce que la ligne compacte ne peut plus afficher : portions, changement
+// de plat, retrait, et vidage de la journée.
+export function openDayMenu(dayIdx) {
+  state.modal = { type: 'daymenu', dayIdx };
+  $('#modal').hidden = false;
+
+  function slotBlock(slot) {
+    const meal = state.week[dayIdx][slot];
+    const r = meal ? recipeById(meal.recipeId) : null;
+    const label = SLOT_LABEL[slot];
+
+    if (!meal || !r) {
+      return h('div', { class: 'daymenu-slot' },
+        h('p', { class: 'kicker' }, h('em', {}, label.toLowerCase())),
+        h('p', { class: 'muted', style: 'margin:2px 0 8px' },
+          meal ? 'Recette supprimée de la bibliothèque.' : 'Aucun plat prévu.'),
+        h('button', { class: 'btn block', onclick: () => { closeModal(); openPicker(dayIdx, slot); } },
+          icon.plus(), 'Choisir un plat'),
+      );
+    }
+
+    return h('div', { class: 'daymenu-slot' },
+      h('p', { class: 'kicker' }, h('em', {}, label.toLowerCase())),
+      h('h4', { class: 'daymenu-name' }, r.name),
+      h('p', { class: 'section-meta' }, fmtTime(r.time)),
+      portionsControl(meal.portions || r.portions, n => {
+        meal.portions = Math.max(1, Math.min(20, n));
+        persist();
+        renderMenu();
+        render();
+      }),
+      h('div', { class: 'btn-row', style: 'margin-top:10px' },
+        h('button', { class: 'btn', onclick: () => { closeModal(); openPicker(dayIdx, slot); } }, 'Changer'),
+        h('button', { class: 'btn', onclick: () => { clearSlot(dayIdx, slot); closeModal(); } }, 'Retirer'),
+      ),
+    );
+  }
+
+  function renderMenu() {
+    $('#modal').replaceChildren(h('div', { class: 'modal-card' },
+      h('button', { class: 'modal-close', onclick: closeModal }, '×'),
+      h('p', { class: 'kicker' }, h('em', {}, 'journée')),
+      h('h2', { class: 'modal-title' }, DAYS_FR_LONG[dayIdx]),
+      h('hr', { class: 'dashed' }),
+      slotBlock('lunch'),
+      h('hr', { class: 'dashed' }),
+      slotBlock('dinner'),
+      h('div', { class: 'form-foot' },
+        h('button', {
+          class: 'btn', onclick: () => {
+            clearSlot(dayIdx, 'lunch');
+            clearSlot(dayIdx, 'dinner');
+            closeModal();
+          },
+        }, 'Vider la journée'),
+        h('button', { class: 'btn primary', onclick: closeModal }, 'Fermer'),
+      ),
+    ));
+  }
+
+  renderMenu();
+}
+
+// === NOTIFICATIONS (cloche du bandeau) ===
+// Deux signaux concrets : les fiches reconstituées qui attendent une relecture,
+// et l'ancienneté de la dernière sauvegarde exportée.
+export function openNotifications() {
+  state.modal = { type: 'notifications' };
+  $('#modal').hidden = false;
+
+  const toCheck = state.recipes.filter(r => r.reconstructed).length;
+  let last = null;
+  try { last = localStorage.getItem('tablee.lastBackup'); } catch (_) {}
+  const days = last ? Math.floor((Date.now() - new Date(last).getTime()) / 86400000) : null;
+
+  const items = [];
+  if (toCheck > 0) {
+    items.push(h('div', { class: 'notif-item' },
+      h('span', { class: 'notif-dot' }),
+      h('div', {},
+        h('p', { class: 'notif-title' }, `${toCheck} recettes à vérifier`),
+        h('p', { class: 'notif-sub' },
+          'Leur fiche d\'origine a été perdue : le contenu a été reconstitué et mérite une relecture.'),
+      ),
+    ));
+  }
+  items.push(h('div', { class: 'notif-item' },
+    h('span', { class: 'notif-dot', 'data-tone': (days === null || days > 7) ? 'warn' : 'ok' }),
+    h('div', {},
+      h('p', { class: 'notif-title' },
+        days === null ? 'Aucune sauvegarde exportée'
+          : days === 0 ? 'Sauvegarde faite aujourd\'hui'
+          : `Dernière sauvegarde il y a ${days} j`),
+      h('p', { class: 'notif-sub' },
+        'Vos recettes ne vivent que dans ce navigateur. Exportez-les depuis « Plus » pour ne rien perdre.'),
+    ),
+  ));
+
+  $('#modal').replaceChildren(h('div', { class: 'modal-card' },
+    h('button', { class: 'modal-close', onclick: closeModal }, '×'),
+    h('p', { class: 'kicker' }, h('em', {}, 'à savoir')),
+    h('h2', { class: 'modal-title' }, 'Notifications'),
+    h('hr', { class: 'dashed' }),
+    h('div', { class: 'notif-list' }, ...items),
+    h('div', { class: 'form-foot' },
+      h('button', { class: 'btn primary', onclick: closeModal }, 'Fermer'),
     ),
   ));
 }

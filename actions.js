@@ -108,6 +108,7 @@ export function exportData() {
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
+    try { localStorage.setItem('tablee.lastBackup', new Date().toISOString()); } catch (_) {}
     toast('Sauvegarde téléchargée');
   } catch (e) {
     console.error(e);
@@ -139,4 +140,44 @@ export async function importData(file) {
     console.error(e);
     toast('Import impossible : fichier invalide');
   }
+}
+
+// === FAVORIS / À TESTER ===
+function toggleIn(list, id) {
+  const i = list.indexOf(id);
+  if (i >= 0) list.splice(i, 1); else list.push(id);
+  return i < 0;
+}
+
+export function isFavorite(id) { return state.favorites.includes(id); }
+export function isToTry(id) { return state.toTry.includes(id); }
+
+export function toggleFavorite(id) {
+  const added = toggleIn(state.favorites, id);
+  persist(); render();
+  toast(added ? 'Ajoutée aux favoris' : 'Retirée des favoris');
+}
+
+export function toggleToTry(id) {
+  const added = toggleIn(state.toTry, id);
+  persist(); render();
+  toast(added ? 'Ajoutée à « à tester »' : 'Retirée de « à tester »');
+}
+
+// === COCHAGE DE LA LISTE DE COURSES ===
+export function isChecked(key) { return state.shopping.checked.includes(key); }
+
+export function toggleChecked(key) {
+  toggleIn(state.shopping.checked, key);
+  persist(); render();
+}
+
+export function toggleCheckAll() {
+  const keys = computeShopping().map(i => i.key);
+  const allDone = keys.length > 0 && keys.every(k => state.shopping.checked.includes(k));
+  // Ne touche qu'aux ingrédients affichés : on préserve les coches d'items masqués.
+  const others = state.shopping.checked.filter(k => !keys.includes(k));
+  state.shopping.checked = allDone ? others : [...others, ...keys];
+  persist(); render();
+  toast(allDone ? 'Tout décoché' : 'Tout coché');
 }
