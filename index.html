@@ -73,6 +73,23 @@
             reloading = true;
             window.location.reload();
           });
+
+          // Sans cela, le navigateur ne cherche une nouvelle version qu'à la
+          // navigation, et pour une PWA installée qu'on ne ferme jamais cela
+          // peut vouloir dire des jours. On redemande à chaque retour sur
+          // l'app, au plus une fois par minute.
+          let lastCheck = 0;
+          const checkForUpdate = () => {
+            const now = Date.now();
+            if (now - lastCheck < 60000) return;
+            lastCheck = now;
+            reg.update().catch(() => {});
+          };
+          checkForUpdate();
+          document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') checkForUpdate();
+          });
+          window.addEventListener('focus', checkForUpdate);
         } catch (_) {}
       });
     }
