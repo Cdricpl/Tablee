@@ -227,6 +227,16 @@ main {
 .btn-ghost:hover { background: rgba(28, 42, 29, 0.05); }
 .btn-ghost svg { display: block; }
 
+/* Boutons d'icône seule : carrés. Avec le padding horizontal du bouton texte
+   ils débordaient et la barre d'actions de la fiche recette passait à la
+   ligne. */
+.btn-ghost.icon-only {
+  width: 40px;
+  padding: 8px 0;
+  justify-content: center;
+  gap: 0;
+}
+
 /* Actions secondaires : alignées à droite, sous l'action principale. */
 .row-end {
   display: flex;
@@ -380,56 +390,95 @@ main {
 
 .modal-card {
   background: var(--card);
-  border-radius: 4px;
+  border-radius: 6px;
   width: 100%;
-  max-width: 520px;
+  max-width: 480px;
   margin: auto;
-  padding: 26px 24px 32px;
+  padding: 18px 20px 22px;
   position: relative;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
 }
 
+/* Entête partagée : surtitre + titre à gauche, fermeture à droite. La croix
+   était auparavant en position absolue par-dessus le contenu, ce qui poussait
+   les titres à se couper sur deux lignes pour l'éviter. */
+.modal-head-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--card-edge);
+}
+.modal-head-text { flex: 1; min-width: 0; }
+
+.modal-kicker {
+  font-family: var(--serif-body);
+  font-style: italic;
+  font-size: 15px;
+  color: var(--terra);
+  margin: 0 0 1px;
+}
+
 .modal-close {
-  position: absolute;
-  top: 18px;
-  right: 18px;
-  width: 36px;
-  height: 36px;
-  border: none;
-  background: var(--ink-deep);
-  color: var(--cream);
-  border-radius: 2px;
-  font-size: 18px;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--card-edge);
+  background: transparent;
+  color: var(--olive-text);
+  border-radius: 50%;
+  font-size: 19px;
+  line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
 }
-
-.recipe-modal .modal-head {
-  margin-bottom: 4px;
-}
-
-.recipe-modal .modal-cat {
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.18em;
-  color: var(--terra);
-  text-transform: uppercase;
+.modal-close:hover {
+  background: var(--ink-deep);
+  border-color: var(--ink-deep);
+  color: var(--cream);
 }
 
 .modal-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
-  margin: 12px 0 12px;
+  margin: 0 0 14px;
 }
 
 .modal-title {
   font-family: var(--serif);
   font-weight: 400;
-  font-size: 36px;
-  line-height: 1.05;
-  margin: 6px 0 14px;
+  font-size: 27px;
+  line-height: 1.1;
+  margin: 0;
   color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+/* Un nom de domaine ou une clé en chasse fixe débordait de la carte : rien ne
+   les autorisait à se couper, et la modale ne défile pas horizontalement. */
+.modal-card code,
+.modal-card a { overflow-wrap: anywhere; }
+/* Les liens gardaient le bleu par défaut du navigateur, seule couleur de l'app
+   hors palette. */
+.modal-card a {
+  color: var(--terra);
+  text-decoration-color: rgba(196, 74, 42, 0.4);
+  text-underline-offset: 2px;
+}
+.modal-card a:hover { text-decoration-color: var(--terra); }
+/* Le filet pointillé de séparation collait au bas des boutons précédents. */
+.modal-card hr.dashed { margin-top: 20px; }
+.modal-card code {
+  font-family: var(--mono);
+  font-size: 0.86em;
+  background: rgba(28, 42, 29, 0.05);
+  border-radius: 3px;
+  padding: 1px 4px;
 }
 
 .modal-meta-row {
@@ -551,25 +600,36 @@ main {
   display: block;
   margin-bottom: 4px;
 }
-.field input[type="text"],
-.field input[type="number"],
+/* Champs encadrés plutôt que simplement soulignés : sur un écran tactile la
+   zone à toucher était réduite au trait, et les libellés flottaient sans
+   rattachement visible à leur champ. */
+/* Tous les champs saisissables, pas seulement text/number : la clé API est un
+   input[type=password] et gardait la largeur par défaut du navigateur. */
+.field input:not([type="file"]):not([type="checkbox"]):not([type="radio"]),
 .field select {
   width: 100%;
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid rgba(28, 42, 29, 0.3);
-  padding: 6px 0;
+  background: var(--cream-warm);
+  border: 1px solid var(--card-edge);
+  border-radius: 4px;
+  padding: 11px 12px;
   font-family: var(--serif-body);
-  font-size: 22px;
+  font-size: 18px;
   color: var(--ink);
   outline: none;
+  transition: border-color 0.12s, background 0.12s;
 }
-.field input:focus, .field select:focus { border-bottom-color: var(--terra); }
+.field input::placeholder { color: rgba(28, 42, 29, 0.38); }
+.field input:focus, .field select:focus {
+  border-color: var(--terra);
+  background: var(--card);
+}
 
+/* Colonnes égales quel que soit le nombre de champs : la grille était figée
+   sur trois colonnes et déformait les formulaires qui n'en ont que deux. */
 .field-grid {
   display: grid;
-  grid-template-columns: 1.2fr 1fr 1fr;
-  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+  gap: 12px;
 }
 
 .dropzone {
@@ -599,23 +659,27 @@ main {
   padding: 6px 0 10px;
   border-bottom: 1px dashed rgba(28, 42, 29, 0.2);
 }
-.ing-row { grid-template-columns: 1.2fr 0.6fr 0.7fr 24px; }
+.ing-row { grid-template-columns: 1.4fr 0.7fr 0.9fr 26px; }
 .step-row { grid-template-columns: 50px 1fr 24px; }
 
+/* Mêmes champs encadrés que le reste des formulaires : les lignes
+   d'ingrédients et d'étapes gardaient le trait souligné et détonnaient. */
 .ing-row input, .step-row input, .ing-row select {
-  border: none;
-  border-bottom: 1px solid rgba(28, 42, 29, 0.25);
-  background: transparent;
-  padding: 4px 0;
+  border: 1px solid var(--card-edge);
+  border-radius: 4px;
+  background: var(--cream-warm);
+  padding: 9px 10px;
   font-family: var(--serif-body);
-  font-size: 17px;
+  font-size: 16px;
   color: var(--ink);
   outline: none;
   width: 100%;
+  min-width: 0;
 }
 
 .ing-row input:focus, .step-row input:focus, .ing-row select:focus {
-  border-bottom-color: var(--terra);
+  border-color: var(--terra);
+  background: var(--card);
 }
 
 .row-x {
@@ -637,7 +701,29 @@ main {
 .form-foot {
   display: flex;
   gap: 10px;
-  margin-top: 22px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--card-edge);
+}
+
+/* Recherche sans résultat : le rebond vers l'IA, saisie déjà reprise. */
+.no-result {
+  text-align: center;
+  padding: 26px 6px 6px;
+}
+.no-result-title {
+  font-family: var(--serif);
+  font-size: 21px;
+  color: var(--ink);
+  margin: 0 0 6px;
+  overflow-wrap: anywhere;
+}
+.no-result-sub {
+  font-family: var(--serif-body);
+  font-size: 16px;
+  line-height: 1.4;
+  color: var(--olive-text);
+  margin: 0 0 18px;
 }
 
 /* === Shopping === */
@@ -1474,6 +1560,39 @@ body:has(.shop-bar) main { padding-bottom: 164px; }
 }
 .chip-row.scroller::-webkit-scrollbar { display: none; }
 .chip-row.scroller .chip { flex: 0 0 auto; white-space: nowrap; }
+
+/* --- Choix du rayon --- */
+/* .aisle-picker / .aisle-chip n'avaient aucune règle : les rayons s'affichaient
+   en boutons bruts du navigateur, seul endroit de l'app dans ce cas. */
+.aisle-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+.aisle-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 14px;
+  text-align: left;
+  background: var(--cream-warm);
+  border: 1px solid var(--card-edge);
+  border-radius: 4px;
+  font-family: var(--serif-body);
+  font-size: 17px;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+.aisle-chip span:first-child { font-size: 20px; line-height: 1; }
+.aisle-chip:hover { border-color: var(--olive); background: var(--card); }
+.aisle-chip[data-active="true"] {
+  background: var(--terra);
+  border-color: var(--terra);
+  color: #fbf6e9;
+}
 
 /* --- Vue « Plus » --- */
 .more-list { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }

@@ -409,11 +409,41 @@ export function viewSearch() {
         h('em', {}, 'Tapez un ingrédient ou un nom de plat, ou filtrez par catégorie.')));
       return;
     }
+    if (list.length) {
+      resultsEl.append(
+        h('p', { class: 'section-meta' }, plural(list.length, 'résultat', 'résultats')),
+        recipeGrid(list),
+      );
+      // Des résultats mais aucun qui convient : le recours à l'IA reste à
+      // portée, en retrait, et emporte lui aussi la saisie.
+      if (lq) {
+        resultsEl.append(h('div', { class: 'row-end', style: 'margin-top:16px' },
+          h('button', { class: 'btn-ghost', onclick: () => askAI() },
+            icon.sparkle(), 'Demander à l\'IA')));
+      }
+      return;
+    }
+    // Sans résultat, le rebond utile est l'IA — avec la saisie déjà reprise.
     resultsEl.append(
-      h('p', { class: 'section-meta' }, plural(list.length, 'résultat', 'résultats')),
-      list.length ? recipeGrid(list) : h('p', { class: 'empty' }, 'Aucun résultat.'),
+      h('p', { class: 'section-meta' }, '0 résultat'),
+      h('div', { class: 'no-result' },
+        h('p', { class: 'no-result-title' },
+          lq ? `Rien pour « ${q.trim()} ».` : 'Rien dans cette catégorie.'),
+        h('p', { class: 'no-result-sub' }, h('em', {},
+          lq
+            ? 'Tablée peut demander à l\'IA d\'inventer une recette avec ces ingrédients.'
+            : 'Essayez un ingrédient ou un nom de plat.')),
+        lq
+          ? h('button', { class: 'btn primary block', onclick: () => askAI() },
+              icon.sparkle(), 'Demander à l\'IA')
+          : null,
+      ),
     );
   }
+
+  // La saisie part telle quelle vers le menu libre : la ressaisir n'avait
+  // aucun intérêt et c'était le principal point de friction de la recherche.
+  const askAI = () => openMenuLibre({ query: q.trim() });
 
   chipRow.append(...CATEGORIES.map(c => h('button', {
     class: 'chip', 'data-cat': c.id,
@@ -441,9 +471,6 @@ export function viewSearch() {
     ),
 
     chipRow,
-
-    h('button', { class: 'btn block', onclick: () => openMenuLibre() },
-      icon.sparkle(), 'Demander à l\'IA'),
 
     resultsEl,
   );

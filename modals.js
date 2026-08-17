@@ -36,10 +36,7 @@ export function openRecipe(id, opts = {}) {
 
   function content() {
     return h('div', { class: 'modal-card recipe-modal' },
-      h('button', { class: 'modal-close', onclick: closeModal }, '×'),
-      h('div', { class: 'modal-head' },
-        h('span', { class: 'modal-cat' }, (cat?.name || '').toUpperCase()),
-      ),
+      modalHead(cat?.name || 'recette', r.name),
       h('div', { class: 'modal-actions' },
         h('button', { class: 'btn-ghost', onclick: () => chooseAndAddToWeek(r.id, portions) }, '+ Au menu'),
         h('button', {
@@ -56,7 +53,6 @@ export function openRecipe(id, opts = {}) {
         h('button', { class: 'btn-ghost icon-only', onclick: () => { closeModal(); openEdit(r.id); }, title: 'Modifier' }, icon.edit()),
         h('button', { class: 'btn-ghost icon-only danger', onclick: () => deleteRecipe(r.id), title: 'Supprimer' }, icon.trash()),
       ),
-      h('h2', { class: 'modal-title' }, r.name),
       r.reconstructed
         ? h('p', { class: 'recon-badge' },
             '⚠ Recette reconstituée : la fiche d\'origine a été perdue. ',
@@ -107,10 +103,7 @@ export function openRecipeObject(r, opts = {}) {
   function content() {
     const cat = catById(r.cat);
     return h('div', { class: 'modal-card recipe-modal' },
-      h('button', { class: 'modal-close', onclick: closeModal }, '×'),
-      h('div', { class: 'modal-head' },
-        h('span', { class: 'modal-cat' }, (cat?.name || '').toUpperCase()),
-      ),
+      modalHead(cat?.name || 'recette', r.name),
       h('div', { class: 'modal-actions' },
         h('button', { class: 'btn-ghost', onclick: () => {
           let id = r.id;
@@ -134,7 +127,6 @@ export function openRecipeObject(r, opts = {}) {
         } }, 'Enregistrer'),
         h('button', { class: 'btn-ghost icon-only', onclick: () => exportRecipe(r), title: 'Sauvegarder en JSON' }, icon.download()),
       ),
-      h('h2', { class: 'modal-title' }, r.name),
       r.reconstructed
         ? h('p', { class: 'recon-badge' },
             '⚠ Recette reconstituée : la fiche d\'origine a été perdue. ',
@@ -170,6 +162,25 @@ export function openRecipeObject(r, opts = {}) {
   renderModal();
 }
 
+// En-tête commun à toutes les modales. Il était recopié dans chacune sous la
+// forme « croix flottante + surtitre + titre », ce qui laissait le titre passer
+// sous le bouton de fermeture et obligeait à le couper sur deux lignes.
+// Ici le titre et la croix partagent une même rangée : la croix ne recouvre
+// plus rien et tous les panneaux s'ouvrent avec la même entête.
+export function modalHead(kicker, ...title) {
+  return h('div', { class: 'modal-head-row' },
+    h('div', { class: 'modal-head-text' },
+      kicker ? h('p', { class: 'modal-kicker' }, h('em', {}, kicker)) : null,
+      h('h2', { class: 'modal-title' }, ...title),
+    ),
+    h('button', {
+      class: 'modal-close', type: 'button',
+      'aria-label': 'Fermer', title: 'Fermer',
+      onclick: closeModal,
+    }, '×'),
+  );
+}
+
 export function portionsControl(val, onChange) {
   return h('span', { class: 'portions' },
     icon.users(),
@@ -186,8 +197,15 @@ export function chooseAndAddToWeek(recipeId, portions, defaults = {}) {
   const slotDefault = defaults.slot || 'dinner';
   const picker = h('div', { class: 'slot-picker', style: 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.3);z-index:9999' },
     h('div', { class: 'modal-card', style: 'max-width:420px;padding:18px' },
-      h('button', { class: 'modal-close', onclick: () => picker.remove() }, '×'),
-      h('h3', { class: 'modal-title' }, 'Ajouter au menu'),
+      h('div', { class: 'modal-head-row' },
+        h('div', { class: 'modal-head-text' },
+          h('h2', { class: 'modal-title' }, 'Ajouter au menu'),
+        ),
+        h('button', {
+          class: 'modal-close', type: 'button', 'aria-label': 'Fermer',
+          onclick: () => picker.remove(),
+        }, '×'),
+      ),
       h('div', { class: 'field' },
         h('label', { class: 'field-label' }, 'Jour'),
         h('select', { id: 'slot-day' }, ...DAYS_FR_LONG.map((d, i) => h('option', { value: i, selected: i === dayDefault ? 'selected' : null }, d))),
@@ -237,10 +255,7 @@ export function openEdit(id, prefill) {
     const m = $('#modal');
     m.replaceChildren();
     m.append(h('div', { class: 'modal-card' },
-      h('button', { class: 'modal-close', onclick: closeModal }, '×'),
-      h('p', { class: 'kicker' }, h('em', {}, 'éditer')),
-      h('h2', { class: 'modal-title' }, isNew ? 'Nouvelle recette' : 'Modifier la recette'),
-      h('hr', { class: 'dashed' }),
+      modalHead('éditer', isNew ? 'Nouvelle recette' : 'Modifier la recette'),
 
       field('Nom de la recette', h('input', {
         type: 'text', value: r.name,
@@ -262,12 +277,15 @@ export function openEdit(id, prefill) {
         r.photo ? h('img', { src: r.photo, style: 'width:100%;border-radius:3px;margin-top:8px;max-height:200px;object-fit:cover' }) : null,
       ),
 
+      // La catégorie prend toute la largeur : dans une colonne sur trois, des
+      // libellés comme « Plats familiaux » étaient coupés à « Plat… ».
+      field('Catégorie', h('select', {
+        onchange: e => r.cat = e.target.value,
+      }, ...CATEGORIES.map(c =>
+        h('option', { value: c.id, selected: c.id === r.cat ? 'selected' : null }, `${c.emoji} ${c.name}`),
+      ))),
+
       h('div', { class: 'field-grid' },
-        field('Catégorie', h('select', {
-          onchange: e => r.cat = e.target.value,
-        }, ...CATEGORIES.map(c =>
-          h('option', { value: c.id, selected: c.id === r.cat ? 'selected' : null }, `${c.emoji} ${c.name}`),
-        ))),
         field('Portions', h('input', {
           type: 'number', value: String(r.portions), min: '1',
           oninput: e => r.portions = +e.target.value || 1,
@@ -382,9 +400,8 @@ export function openPicker(dayIdx, slot) {
   refreshList();
 
   $('#modal').append(h('div', { class: 'modal-card' },
-    h('button', { class: 'modal-close', onclick: closeModal }, '×'),
-    h('p', { class: 'kicker' }, h('em', {}, `${DAYS_FR_LONG[dayIdx]} · ${SLOT_LABEL[slot].toLowerCase()}`)),
-    h('h2', { class: 'modal-title' }, 'Choisir ', h('em', {}, 'un plat')),
+    modalHead(`${DAYS_FR_LONG[dayIdx]} · ${SLOT_LABEL[slot].toLowerCase()}`,
+      'Choisir ', h('em', {}, 'un plat')),
 
     h('div', { class: 'search' },
       h('span', { class: 'search-icon' }, icon.search()),
@@ -406,9 +423,7 @@ export function openAisleChooser(item) {
   state.modal = { type: 'aisle' };
   $('#modal').hidden = false;
   $('#modal').append(h('div', { class: 'modal-card' },
-    h('button', { class: 'modal-close', onclick: closeModal }, '×'),
-    h('p', { class: 'kicker' }, h('em', {}, 'rayon')),
-    h('h2', { class: 'modal-title' }, item.name),
+    modalHead('rayon', item.name),
     h('p', { class: 'muted', style: 'font-family:var(--serif-body);font-size:16px;' },
       'Choisissez le rayon. Tablée mémorisera votre préférence.'),
     h('div', { class: 'aisle-picker' },
@@ -437,9 +452,7 @@ export function openItemMenu(item) {
   $('#modal').hidden = false;
   const aisle = AISLES.find(a => a.id === item.aisle);
   $('#modal').append(h('div', { class: 'modal-card' },
-    h('button', { class: 'modal-close', onclick: closeModal }, '×'),
-    h('p', { class: 'kicker' }, h('em', {}, 'article')),
-    h('h2', { class: 'modal-title' }, item.name),
+    modalHead('article', item.name),
     h('p', { class: 'section-meta' },
       `${formatQty(item.qty)} ${item.unit}${aisle ? ` · ${aisle.name}` : ''}`),
 
@@ -548,9 +561,7 @@ export function openManualAdd() {
   }
 
   $('#modal').append(h('div', { class: 'modal-card' },
-    h('button', { class: 'modal-close', onclick: closeModal }, '×'),
-    h('p', { class: 'kicker' }, h('em', {}, 'ajout libre')),
-    h('h2', { class: 'modal-title' }, 'Ajouter un ', h('em', {}, 'ingrédient')),
+    modalHead('ajout libre', 'Ajouter un ', h('em', {}, 'ingrédient')),
 
     field('Nom', inputEl),
     sugEl,
@@ -574,8 +585,11 @@ export function openMenuLibre(opts = {}) {
   state.modal = { type: 'menulibre' };
   $('#modal').hidden = false;
 
-  let input = '';
-  let portions = null;
+  // opts.query : ce que l'utilisateur a déjà tapé ailleurs (vue Recherche).
+  // Sans ça, arriver ici depuis une recherche sans résultat obligeait à
+  // ressaisir les mêmes ingrédients.
+  let input = opts.query || '';
+  let portions = detectPortions(input);
   let busy = false;
   let llmResult = null;
   let error = null;
@@ -583,6 +597,7 @@ export function openMenuLibre(opts = {}) {
   const inputEl = h('input', {
     type: 'text',
     placeholder: 'bœuf haricots pommes de terre pour 4',
+    value: input,
     oninput: e => {
       input = e.target.value;
       portions = detectPortions(input);
@@ -689,9 +704,7 @@ export function openMenuLibre(opts = {}) {
   }
 
   $('#modal').append(h('div', { class: 'modal-card' },
-    h('button', { class: 'modal-close', onclick: closeModal }, '×'),
-    h('p', { class: 'kicker' }, h('em', {}, '(chercher une recette)')),
-    h('h2', { class: 'modal-title' }, 'Écrire ', h('em', {}, 'un plat')),
+    modalHead('chercher une recette', 'Écrire ', h('em', {}, 'un plat')),
 
     field('Description du plat', inputEl),
 
@@ -747,14 +760,12 @@ export function openImport() {
   }
 
   $('#modal').append(h('div', { class: 'modal-card' },
-    h('button', { class: 'modal-close', onclick: closeModal }, '×'),
-    h('p', { class: 'kicker' }, h('em', {}, 'importer')),
-    h('h2', { class: 'modal-title' }, 'Importer ', h('em', {}, 'PDF / Image')),
+    modalHead('importer', 'Importer ', h('em', {}, 'PDF / Image')),
     h('p', { class: 'muted', style: 'font-family:var(--serif-body);font-style:italic;font-size:16px;' },
       'Photo ou PDF d\'une recette. Tablée extrait titre, portions, temps, ingrédients et étapes.'),
 
     h('label', { class: 'dropzone', style: 'padding:32px' },
-      icon.upload(), 'Choisir un fichier (image ou PDF)',
+      icon.upload(), 'Choisir un fichier',
       h('input', { type: 'file', accept: 'image/*,application/pdf', class: 'hidden-input',
         onchange: async e => {
           const f = e.target.files[0];
@@ -786,11 +797,7 @@ export function openSettings() {
   let key = getApiKey() || '';
 
   $('#modal').append(h('div', { class: 'modal-card' },
-    h('button', { class: 'modal-close', onclick: closeModal }, '×'),
-    h('p', { class: 'kicker' }, h('em', {}, 'réglages')),
-    h('h2', { class: 'modal-title' }, h('em', {}, 'Tablée')),
-    h('hr', { class: 'dashed' }),
-
+    modalHead('réglages', h('em', {}, 'Tablée')),
     h('p', { style: 'font-family:var(--serif-body);font-size:17px;line-height:1.5' },
       'Pour le ', h('strong', {}, 'menu libre'), ' et l\'', h('strong', {}, 'import PDF/image'),
       ', Tablée s\'appuie sur ', h('strong', {}, 'Gemini'),
@@ -827,9 +834,9 @@ export function openSettings() {
       'Exportez-les pour les sauvegarder ou changer d\'appareil.'),
 
     h('div', { class: 'btn-row' },
-      h('button', { class: 'btn', onclick: exportData }, icon.download(), 'Exporter mes données'),
+      h('button', { class: 'btn', onclick: exportData }, icon.download(), 'Exporter'),
       h('label', { class: 'btn' },
-        icon.upload(), 'Importer une sauvegarde',
+        icon.upload(), 'Importer',
         h('input', {
           type: 'file', accept: 'application/json', class: 'hidden-input',
           onchange: async e => { const f = e.target.files[0]; if (f) await importData(f); },
@@ -880,11 +887,8 @@ export function openDayMenu(dayIdx) {
 
   function renderMenu() {
     $('#modal').replaceChildren(h('div', { class: 'modal-card' },
-      h('button', { class: 'modal-close', onclick: closeModal }, '×'),
-      h('p', { class: 'kicker' }, h('em', {}, 'journée')),
-      h('h2', { class: 'modal-title' }, DAYS_FR_LONG[dayIdx]),
-      h('hr', { class: 'dashed' }),
-      slotBlock('lunch'),
+      modalHead('journée', DAYS_FR_LONG[dayIdx]),
+            slotBlock('lunch'),
       h('hr', { class: 'dashed' }),
       slotBlock('dinner'),
       h('div', { class: 'form-foot' },
@@ -894,7 +898,7 @@ export function openDayMenu(dayIdx) {
             clearSlot(dayIdx, 'dinner');
             closeModal();
           },
-        }, 'Vider la journée'),
+        }, 'Vider le jour'),
         h('button', { class: 'btn primary', onclick: closeModal }, 'Fermer'),
       ),
     ));
@@ -939,11 +943,8 @@ export function openNotifications() {
   ));
 
   $('#modal').replaceChildren(h('div', { class: 'modal-card' },
-    h('button', { class: 'modal-close', onclick: closeModal }, '×'),
-    h('p', { class: 'kicker' }, h('em', {}, 'à savoir')),
-    h('h2', { class: 'modal-title' }, 'Notifications'),
-    h('hr', { class: 'dashed' }),
-    h('div', { class: 'notif-list' }, ...items),
+    modalHead('à savoir', 'Notifications'),
+        h('div', { class: 'notif-list' }, ...items),
     h('div', { class: 'form-foot' },
       h('button', { class: 'btn primary', onclick: closeModal }, 'Fermer'),
     ),
