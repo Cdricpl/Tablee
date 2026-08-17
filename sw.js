@@ -1,5 +1,5 @@
 // sw.js — service worker minimal pour Tablée (cache offline)
-const CACHE = 'tablee-v11';
+const CACHE = 'tablee-v12';
 const ASSETS = [
   './',
   './index.html',
@@ -64,17 +64,12 @@ self.addEventListener('fetch', e => {
   // Hors origine et hors liste tierce autorisée : laisser passer
   if (url.origin !== location.origin) return;
 
-  // Fichiers applicatifs : network-first (compare en endsWith pour supporter les sous-chemins).
-  // Tous les modules JS et le CSS — sinon les corrections ne se propagent jamais sur les
-  // appareils déjà installés (cache-first les figerait).
-  const networkFirst = [
-    '/app.js', '/state.js', '/dom.js', '/render.js',
-    '/views.js', '/modals.js', '/actions.js', '/pure.js',
-    '/data.js', '/llm.js',
-    '/index.html', '/style.css',
-  ];
+  // Fichiers applicatifs : network-first, sinon les corrections ne se propagent
+  // jamais sur les appareils déjà installés (cache-first les figerait).
+  // On teste l'extension plutôt qu'une liste de noms : une liste oubliait
+  // fatalement les nouveaux modules (data-docs.js est passé à travers).
   const isAppFile =
-    networkFirst.some(p => url.pathname.endsWith(p)) ||
+    /\.(?:js|css|html|webmanifest)$/.test(url.pathname) ||
     url.pathname === '/' ||
     url.pathname.endsWith('/');
   if (isAppFile) {
