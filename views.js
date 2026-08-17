@@ -443,6 +443,8 @@ export function viewMore() {
         inp.remove();
       }),
       row(icon.edit(), 'Réglages', 'Clé API Gemini et confidentialité', openSettings),
+      row(icon.refresh(), 'Forcer la mise à jour', 'Vider le cache et recharger l\'application',
+        forceUpdate),
     ),
 
     toCheck > 0
@@ -455,6 +457,29 @@ export function viewMore() {
   );
 
   return root;
+}
+
+// Dernier recours quand un appareil reste bloqué sur une version périmée :
+// on vide les caches, on désinscrit le service worker et on recharge.
+// Les recettes et la semaine vivent dans localStorage, qui n'est pas touché.
+async function forceUpdate() {
+  if (!confirm('Vider le cache et recharger l\'application ?\n\nVos recettes, votre semaine et vos courses sont conservées.')) return;
+  try {
+    if (window.caches) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => caches.delete(k)));
+    }
+    if (navigator.serviceWorker) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.unregister()));
+    }
+  } catch (e) {
+    console.error('forceUpdate', e);
+  }
+  // reload(true) n'existe plus : on repasse par l'URL en cassant le cache HTTP.
+  const u = new URL(location.href);
+  u.searchParams.set('maj', String(Date.now()));
+  location.replace(u.toString());
 }
 
 // Repère de version : indique quel cache le service worker sert réellement.
