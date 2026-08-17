@@ -11,8 +11,10 @@ export const DAYS_FR = ['Lun.', 'Mar.', 'Mer.', 'Jeu.', 'Ven.', 'Sam.', 'Dim.'];
 export const DAYS_FR_LONG = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 export const SLOT_LABEL = { lunch: 'Déjeuner', dinner: 'Dîner' };
 
+// getDay() compte à partir de dimanche ; la semaine de Tablée commence lundi.
 const todayJS = new Date().getDay();
-export const dayLabel = (todayJS === 0 ? 'Dimanche' : DAYS_FR_LONG[todayJS - 1]).toUpperCase();
+export const todayIndex = (todayJS + 6) % 7;
+export const dayLabel = DAYS_FR_LONG[todayIndex].toUpperCase();
 
 export const defaultState = () => ({
   recipes: SEED_RECIPES.map(r => ({ ...r, source: 'seed' })),

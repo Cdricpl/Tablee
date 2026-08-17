@@ -5,7 +5,7 @@ import {
   setUserAisle, aisleForUser, DAYS_FR_LONG, SLOT_LABEL,
 } from './state.js';
 import { $, h, closeModal, toast, field, icon } from './dom.js';
-import { newId, fmtTime, cap, localMatch, detectPortions } from './pure.js';
+import { newId, fmtTime, cap, localMatch, detectPortions, formatQty } from './pure.js';
 import {
   AISLES, CATEGORIES, UNITS, INGREDIENT_DB,
   aisleFor, defaultUnitFor, normalizeIngredient, aisleEmojiOf,
@@ -15,7 +15,7 @@ import {
 } from './llm.js';
 import {
   deleteRecipe, exportRecipe, exportData, importData,
-  toggleFavorite, isFavorite, toggleToTry, isToTry, clearSlot,
+  toggleFavorite, isFavorite, toggleToTry, isToTry, clearSlot, removeShoppingItem,
 } from './actions.js';
 import { render } from './render.js';
 
@@ -426,6 +426,29 @@ export function openAisleChooser(item) {
         h('span', {}, a.name),
       )),
     ),
+  ));
+}
+
+// Actions d'un article de la liste. Elles étaient affichées en permanence sur
+// chaque vignette (⇄ et ×) et mangeaient la place ; elles passent derrière un
+// bouton « ⋯ » pour libérer la ligne au profit de la case à cocher.
+export function openItemMenu(item) {
+  state.modal = { type: 'itemMenu' };
+  $('#modal').hidden = false;
+  const aisle = AISLES.find(a => a.id === item.aisle);
+  $('#modal').append(h('div', { class: 'modal-card' },
+    h('button', { class: 'modal-close', onclick: closeModal }, '×'),
+    h('p', { class: 'kicker' }, h('em', {}, 'article')),
+    h('h2', { class: 'modal-title' }, item.name),
+    h('p', { class: 'section-meta' },
+      `${formatQty(item.qty)} ${item.unit}${aisle ? ` · ${aisle.name}` : ''}`),
+
+    h('button', { class: 'btn block', onclick: () => { closeModal(); openAisleChooser(item); } },
+      'Changer de rayon'),
+    h('button', {
+      class: 'btn block danger',
+      onclick: () => { removeShoppingItem(item.key); closeModal(); },
+    }, icon.trash(), 'Retirer de la liste'),
   ));
 }
 

@@ -2,17 +2,17 @@
 // transverses de la barre du bas (Favoris, À tester, Recherche, Plus).
 import {
   state, recipeById, catById,
-  DAYS_FR, SLOT_LABEL, computeShopping,
+  DAYS_FR_LONG, SLOT_LABEL, todayIndex, computeShopping,
 } from './state.js';
 import { h, icon, appendAll } from './dom.js';
 import { fmtTime, formatQty } from './pure.js';
 import { AISLES, CATEGORIES } from './data.js';
 import {
   openRecipe, openEdit, openImport, openMenuLibre, openSettings,
-  openPicker, openManualAdd, openAisleChooser, openDayMenu,
+  openPicker, openManualAdd, openItemMenu, openDayMenu,
 } from './modals.js';
 import {
-  resetWeek, resetShopping, clearSlot, removeShoppingItem, exportPDF,
+  resetWeek, resetShopping, clearSlot, exportPDF,
   toggleFavorite, isFavorite,
   isChecked, toggleChecked, toggleCheckAll,
   exportData, importData,
@@ -208,53 +208,66 @@ export function viewWeek() {
         icon.refresh(), 'Vider la semaine'),
     ),
 
-    h('div', { class: 'week-list' }, ...state.week.map((d, i) => weekDayRow(d, i))),
+    h('div', { class: 'week-list' }, ...state.week.map((d, i) => weekDayCard(d, i))),
   );
 
   return root;
 }
 
-function weekDayRow(day, i) {
-  return h('div', { class: 'week-row' },
-    h('div', { class: 'week-daycell' },
-      h('span', { class: 'week-dayname' }, DAYS_FR[i]),
-      h('span', { class: 'week-daynum' }, `Jour ${i + 1}`),
+// Une carte par jour, les deux repas empilés en pleine largeur. Les deux repas
+// côte à côte laissaient ~140 px par plat : les noms étaient tronqués ou
+// écrasés en corps 14, illisibles d'un coup d'œil.
+function weekDayCard(day, i) {
+  const today = i === todayIndex;
+  return h('article', { class: 'day-card', 'data-today': today ? 'true' : 'false' },
+    h('div', { class: 'day-head' },
+      h('span', { class: 'day-name' }, DAYS_FR_LONG[i]),
+      today ? h('span', { class: 'day-today' }, 'aujourd\'hui') : null,
+      h('button', {
+        class: 'day-menu', title: 'Options du jour',
+        'aria-label': `Options du ${DAYS_FR_LONG[i]}`,
+        onclick: () => openDayMenu(i),
+      }, icon.dots()),
     ),
-    h('span', { class: 'week-sun' }, icon.sun()),
-    weekSlot(day, i, 'lunch'),
-    weekSlot(day, i, 'dinner'),
-    h('button', {
-      class: 'week-more', title: 'Options du jour',
-      'aria-label': `Options du ${DAYS_FR[i]}`,
-      onclick: () => openDayMenu(i),
-    }, icon.dots()),
+    weekMealRow(day, i, 'lunch'),
+    weekMealRow(day, i, 'dinner'),
   );
 }
 
-function weekSlot(day, i, slot) {
+function weekMealRow(day, i, slot) {
   const meal = day[slot];
   const r = meal ? recipeById(meal.recipeId) : null;
-  const cell = h('div', { class: 'week-slot' },
-    h('span', { class: 'week-slot-label' }, SLOT_LABEL[slot].toUpperCase()),
-  );
+  const label = h('span', { class: 'meal-label' }, SLOT_LABEL[slot]);
 
+  // Créneau libre : toute la ligne ouvre le sélecteur, pas un lien de 14 px.
   if (!meal) {
-    cell.append(h('button', { class: 'week-slot-empty', onclick: () => openPicker(i, slot) },
-      '+ choisir un plat'));
-  } else if (!r) {
-    cell.append(h('button', { class: 'week-slot-empty', onclick: () => clearSlot(i, slot) },
-      'Recette supprimée'));
-  } else {
-    cell.append(
-      h('button', {
-        class: 'week-slot-name',
-        onclick: () => openRecipe(r.id, { portions: meal.portions }),
-      }, r.name),
-      h('span', { class: 'week-slot-meta' },
-        `${fmtTime(r.time)} · ${meal.portions || r.portions} pers`),
+    return h('button', { class: 'meal-row meal-row-empty', onclick: () => openPicker(i, slot) },
+      label,
+      h('span', { class: 'meal-add' }, icon.plus(), 'Choisir un plat'),
     );
   }
-  return cell;
+  if (!r) {
+    return h('button', { class: 'meal-row meal-row-empty', onclick: () => clearSlot(i, slot) },
+      label,
+      h('span', { class: 'meal-add' }, 'Recette supprimée — toucher pour retirer'),
+    );
+  }
+  return h('div', { class: 'meal-row' },
+    label,
+    h('button', {
+      class: 'meal-main',
+      onclick: () => openRecipe(r.id, { portions: meal.portions }),
+    },
+      h('span', { class: 'meal-name' }, r.name),
+      h('span', { class: 'meal-meta' },
+        `${fmtTime(r.time)} · ${meal.portions || r.portions} pers`),
+    ),
+    h('button', {
+      class: 'meal-x', title: 'Retirer ce plat',
+      'aria-label': `Retirer ${r.name} du ${SLOT_LABEL[slot].toLowerCase()} de ${DAYS_FR_LONG[i]}`,
+      onclick: () => clearSlot(i, slot),
+    }, '×'),
+  );
 }
 
 // === COURSES ===
@@ -300,31 +313,42 @@ export function viewShopping() {
 }
 
 function aisleBlock(aisle, items) {
-  return h('section', { class: 'aisle' },
+  const done = items.filter(it => isChecked(it.key)).length;
+  // Ce qu'il reste à prendre remonte en tête du rayon : dans un magasin, les
+  // articles déjà cochés n'ont plus à être relus.
+  const sorted = [...items].sort((a, b) => Number(isChecked(a.key)) - Number(isChecked(b.key)));
+
+  return h('section', { class: 'aisle', 'data-done': done === items.length ? 'true' : 'false' },
     h('div', { class: 'aisle-head' },
       h('h3', { class: 'aisle-title' }, aisle.emoji, ' ', aisle.name),
-      h('span', { class: 'aisle-count' }, String(items.length)),
+      h('span', { class: 'aisle-count' }, `${done}/${items.length}`),
     ),
-    h('div', { class: 'aisle-grid' },
-      ...items.map(it => {
-        const on = isChecked(it.key);
-        return h('div', { class: 'aisle-item', 'data-checked': on ? 'true' : 'false' },
-          h('button', {
-            class: 'aisle-check', 'data-on': on ? 'true' : 'false',
-            'aria-label': on ? `Décocher ${it.name}` : `Cocher ${it.name}`,
-            onclick: () => toggleChecked(it.key),
-          }, on ? icon.checkCircle() : null),
-          h('span', { class: 'emoji' }, it.emoji),
-          h('div', { class: 'name' }, it.name),
-          h('div', { class: 'qty-pill' }, `${formatQty(it.qty)} ${it.unit}`),
-          h('div', { class: 'aisle-actions' },
-            h('button', { class: 'aisle-edit', title: 'Changer le rayon',
-              onclick: () => openAisleChooser(it) }, '⇄'),
-            h('button', { class: 'x', onclick: () => removeShoppingItem(it.key), title: 'Retirer' }, '×'),
-          ),
-        );
-      }),
+    h('div', { class: 'shop-list' }, ...sorted.map(shopRow)),
+  );
+}
+
+// Ligne pleine largeur : toute la surface coche l'article. L'ancienne grille à
+// deux colonnes imposait de viser une pastille de 22 px dans un coin, plus les
+// deux boutons d'action affichés en permanence sur chaque vignette.
+function shopRow(it) {
+  const on = isChecked(it.key);
+  return h('div', { class: 'shop-item', 'data-checked': on ? 'true' : 'false' },
+    h('button', {
+      class: 'shop-tap',
+      'aria-pressed': on ? 'true' : 'false',
+      'aria-label': `${on ? 'Décocher' : 'Cocher'} ${it.name}`,
+      onclick: () => toggleChecked(it.key),
+    },
+      h('span', { class: 'shop-check' }, on ? icon.check() : null),
+      h('span', { class: 'shop-emoji' }, it.emoji),
+      h('span', { class: 'shop-name' }, it.name),
+      h('span', { class: 'shop-qty' }, `${formatQty(it.qty)} ${it.unit}`),
     ),
+    h('button', {
+      class: 'shop-more', title: 'Options',
+      'aria-label': `Options pour ${it.name}`,
+      onclick: () => openItemMenu(it),
+    }, icon.dots()),
   );
 }
 
