@@ -30,6 +30,17 @@ export const h = (tag, attrs = {}, ...children) => {
   return el;
 };
 
+// Element.append() convertit null/undefined en texte : un « null » s'affichait
+// littéralement dans les vues qui assemblent des morceaux conditionnels
+// (compteur absent, bloc masqué…). On filtre avant d'insérer.
+export const appendAll = (el, ...children) => {
+  for (const c of children.flat(Infinity)) {
+    if (c == null || c === false) continue;
+    el.append(c);
+  }
+  return el;
+};
+
 export function toast(msg) {
   const t = $('#toast');
   t.textContent = msg;
@@ -64,6 +75,10 @@ export const icon = {
   sparkle: () => h('span', { html: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 13.8 8.2 20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8L12 2Z"/></svg>' }),
   bell: () => h('span', { html: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg>' }),
   home: () => h('span', { html: '<svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3 3 10.2V21h6v-6h6v6h6V10.2Z"/></svg>' }),
+  book: () => h('span', { html: '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v14H6.5A2.5 2.5 0 0 0 4 19.5Z"/><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20v4H6.5A2.5 2.5 0 0 1 4 19.5Z"/><path d="M9 7.5h6"/></svg>' }),
+  calendar: () => h('span', { html: '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>' }),
+  cart: () => h('span', { html: '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M4 4h2l2.2 10.4a2 2 0 0 0 2 1.6h7.2a2 2 0 0 0 2-1.55L21 8H7"/><circle cx="10.5" cy="19.5" r="1.4"/><circle cx="17.5" cy="19.5" r="1.4"/></svg>' }),
+  arrowLeft: () => h('span', { html: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>' }),
   heart: () => h('span', { html: '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 20.3 4.6 13a4.8 4.8 0 0 1 6.8-6.8l.6.6.6-.6A4.8 4.8 0 1 1 19.4 13Z"/></svg>' }),
   heartFull: () => h('span', { html: '<svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="M12 20.3 4.6 13a4.8 4.8 0 0 1 6.8-6.8l.6.6.6-.6A4.8 4.8 0 1 1 19.4 13Z"/></svg>' }),
   chefHat: () => h('span', { html: '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 18h12v2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1zM6 18V13a4 4 0 0 1-1-7.9 4 4 0 0 1 7-2.1 4 4 0 0 1 7 2.1A4 4 0 0 1 18 13v5"/></svg>' }),

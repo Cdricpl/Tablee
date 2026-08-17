@@ -18,7 +18,9 @@ export const CATEGORIES = [
   { id: 'mijote',      name: 'Mijotés',          emoji: '🍲' },
   { id: 'rapide',      name: 'Plats rapides',    emoji: '⚡' },
   { id: 'eco',         name: 'Plats économiques', emoji: '💰' },
-  { id: 'famille',     name: 'Plats familiaux',  emoji: '👨‍👩‍👧' },
+  // Emoji simples : les séquences ZWJ (👨‍👩‍👧) retombent sur un glyphe
+  // monochrome encadré dès qu'une plateforme ne les compose pas.
+  { id: 'famille',     name: 'Plats familiaux',  emoji: '🍽️' },
   { id: 'monde',       name: 'Plats du monde',   emoji: '🌍' },
   { id: 'four',        name: 'Plats au four',    emoji: '🔥' },
   { id: 'sauce',       name: 'Plats en sauce',   emoji: '🥘' },

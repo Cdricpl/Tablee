@@ -1,8 +1,10 @@
 # Photos des catégories
 
 Chaque carte de catégorie de l'écran « Mes recettes » cherche une image à
-`img/cat-<id>.jpg`. Tant que le fichier est absent, la carte affiche une tuile
-dégradée avec l'emoji de la catégorie — rien n'est cassé à l'écran.
+`img/cat-<id>.jpg`. Tant que le fichier est absent, la carte affiche une
+vignette dessinée en CSS : bichromie propre à la catégorie (définie dans
+`style.css`, sélecteur `.cat-photo[data-cat="…"]`), trame fine et emoji de la
+catégorie. C'est un rendu volontaire, pas une image manquante.
 
 Déposez simplement les fichiers ici, sans rien modifier dans le code :
 
