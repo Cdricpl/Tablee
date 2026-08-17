@@ -44,6 +44,11 @@ export function openRecipe(id, opts = {}) {
         h('button', { class: 'btn-ghost icon-only danger', onclick: () => deleteRecipe(r.id), title: 'Supprimer' }, icon.trash()),
       ),
       h('h2', { class: 'modal-title' }, r.name),
+      r.reconstructed
+        ? h('p', { class: 'recon-badge' },
+            '⚠ Recette reconstituée : la fiche d\'origine a été perdue. ',
+            'Quantités et étapes à vérifier, puis à corriger via « Modifier ».')
+        : null,
       h('hr', { class: 'dashed' }),
       h('div', { class: 'modal-meta-row' },
         h('span', { class: 'meta' }, icon.clock(), ' ', fmtTime(r.time)),
@@ -117,6 +122,11 @@ export function openRecipeObject(r, opts = {}) {
         h('button', { class: 'btn-ghost icon-only', onclick: () => exportRecipe(r), title: 'Sauvegarder en JSON' }, icon.download()),
       ),
       h('h2', { class: 'modal-title' }, r.name),
+      r.reconstructed
+        ? h('p', { class: 'recon-badge' },
+            '⚠ Recette reconstituée : la fiche d\'origine a été perdue. ',
+            'Quantités et étapes à vérifier, puis à corriger via « Modifier ».')
+        : null,
       h('hr', { class: 'dashed' }),
       h('div', { class: 'modal-meta-row' },
         h('span', { class: 'meta' }, icon.clock(), ' ', fmtTime(r.time)),

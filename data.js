@@ -1,4 +1,5 @@
 // data.js — base interne Tablée
+import { DOCS_RECIPES } from './data-docs.js';
 
 export const AISLES = [
   { id: 'veg',    name: 'Fruits & Légumes',       emoji: '🥬' },
@@ -21,6 +22,10 @@ export const CATEGORIES = [
   { id: 'monde',       name: 'Plats du monde',   emoji: '🌍' },
   { id: 'four',        name: 'Plats au four',    emoji: '🔥' },
   { id: 'sauce',       name: 'Plats en sauce',   emoji: '🥘' },
+  { id: 'dessert',     name: 'Desserts',         emoji: '🍰' },
+  { id: 'encas',       name: 'En-cas',           emoji: '🍪' },
+  { id: 'apero',       name: 'Apéro',            emoji: '🫒' },
+  { id: 'petitdej',    name: 'Petits déj.',      emoji: '🥞' },
   { id: 'autres',      name: 'Autres',           emoji: '🗂️' },
 ];
 
@@ -29,6 +34,24 @@ export const UNITS = ['g', 'kg', 'ml', 'cl', 'l', 'pc', 'cc', 'cs', 'pincée'];
 // ingrédient → { aisle, emoji, defaultUnit }
 // la clé est le nom canonique en minuscules. Le matching tolère pluriel et accents.
 export const INGREDIENT_DB = {
+  // Ajouts liés aux recettes du dossier Docs
+  'boulgour':          { aisle: 'pantry', emoji: '🌾', unit: 'g' },
+  'ebly':              { aisle: 'pantry', emoji: '🌾', unit: 'g' },
+  'flocons d\'avoine': { aisle: 'pantry', emoji: '🌾', unit: 'g' },
+  'compote de pommes': { aisle: 'pantry', emoji: '🍎', unit: 'g' },
+  'tomates sechees':   { aisle: 'pantry', emoji: '🍅', unit: 'g' },
+  'sucre glace':       { aisle: 'pantry', emoji: '🍚', unit: 'g' },
+  'wraps':             { aisle: 'pantry', emoji: '🌯', unit: 'pc' },
+  'potimarron':        { aisle: 'veg',    emoji: '🎃', unit: 'g' },
+  'pois gourmands':    { aisle: 'veg',    emoji: '🫛', unit: 'g' },
+  'aneth':             { aisle: 'veg',    emoji: '🌿', unit: 'botte' },
+  'ciboulette':        { aisle: 'veg',    emoji: '🌿', unit: 'botte' },
+  'scampis':           { aisle: 'meat',   emoji: '🦐', unit: 'g' },
+  'filet de saxe':     { aisle: 'meat',   emoji: '🥓', unit: 'g' },
+  'burrata':           { aisle: 'dairy',  emoji: '🧀', unit: 'g' },
+  'reblochon':         { aisle: 'dairy',  emoji: '🧀', unit: 'g' },
+  'fromage frais':     { aisle: 'dairy',  emoji: '🧀', unit: 'g' },
+  'jaune d\'oeuf':     { aisle: 'dairy',  emoji: '🥚', unit: 'pc' },
   // Fruits & Légumes
   'oignon':            { aisle: 'veg', emoji: '🧅', unit: 'pc' },
   'echalote':          { aisle: 'veg', emoji: '🧅', unit: 'pc' },
@@ -312,6 +335,12 @@ export const INGREDIENT_DB = {
 
 // Synonymes ramenés à la clé canonique
 const SYNONYMS = {
+  'scampi': 'scampis',
+  'flocon d\'avoine': 'flocons d\'avoine',
+  'pois gourmand': 'pois gourmands',
+  'jaunes d\'oeuf': 'jaune d\'oeuf',
+  'tomate sechee': 'tomates sechees',
+  'wrap': 'wraps',
   'oignons': 'oignon',
   'echalotes': 'echalote',
   'gousses d\'ail': 'gousse d\'ail',
@@ -842,101 +871,9 @@ export const SEED_RECIPES = [
   ]),
 ];
 
-// === RECETTES DU DOSSIER Docs (imports minimalistes) ===
-// Ces entrées pointent vers les fichiers PDF/docx dans Docs/
-const docs = [
-  { id: 'docs-plats-bouglour-lentilles-poulet', name: 'Bouglour et lentilles corail émincés de poulet courgette et carottes', file: 'Docs/Plats/Bouglour et lentilles corail émincés de poulet courgette et carottes.pdf' },
-  { id: 'docs-plats-cabillaud-curry', name: 'Cabillaud aux légumes et au curry rouge', file: 'Docs/Plats/Cabillaud aux légumes et au curry rouge.pdf' },
-  { id: 'docs-plats-conchiglioni-farcis', name: 'Conchiglioni farcis ricotta épinards', file: 'Docs/Plats/Conchiglioni farcis ricotta épinards.pdf' },
-  { id: 'docs-plats-courgette-farcie-quinoa', name: 'Courgette farcie au quinoa', file: 'Docs/Plats/Courgette farcie au quinoa.pdf' },
-  { id: 'docs-plats-croque-saumon', name: 'Croque monsieur au saumon', file: 'Docs/Plats/Croque monsieur au saumon.pdf' },
-  { id: 'docs-plats-crepes-salees', name: 'Crêpes salées idées', file: 'Docs/Plats/Crêpes salées idées.pdf' },
-  { id: 'docs-plats-ebly-legumes-jambon', name: 'Ebly légumes et jambon au four', file: 'Docs/Plats/Ebly légumes et jambon au four.pdf' },
-  { id: 'docs-plats-frites-patate-douce', name: 'Frites de patate douce au four et rillette de thon', file: 'Docs/Plats/Frites de patate douce au four et rillette de thon.pdf' },
-  { id: 'docs-plats-gratin-poisson', name: 'Gratin de poisson aux légumes', file: 'Docs/Plats/Gratin de poisson aux légumes.pdf' },
-  { id: 'docs-plats-gratin-riz-jambon', name: 'Gratin de riz jambon courgette', file: 'Docs/Plats/Gratin de riz jambon courgette.pdf' },
-  { id: 'docs-plats-hache-boeuf-wraps', name: 'Haché de boeuf aux légumes et ses wraps', file: 'Docs/Plats/Haché de boeuf aux légumes et ses wraps.pdf' },
-  { id: 'docs-plats-hamburger-frites', name: 'Hamburger maison et frites de patate douce', file: 'Docs/Plats/Hamburger maison et frites de patate douce.pdf' },
-  { id: 'docs-plats-lasagne-panais-potimarron', name: 'Lasagne de panais et potimarron', file: 'Docs/Plats/Lasagne de panais et potimarron.pdf' },
-  { id: 'docs-plats-lasagne-express-legumes', name: 'Lasagne express aux légumes', file: 'Docs/Plats/Lasagne express aux légumes.pdf' },
-  { id: 'docs-plats-linguine-scampis', name: 'Linguine scampis chorizo et mozzarella', file: 'Docs/Plats/Linguine scampis chorizo et mozzarella.pdf' },
-  { id: 'docs-plats-oeuf-pdt-carottes', name: 'Oeuf au plat carottes et courgettes', file: 'Docs/Plats/Oeuf au plat carottes et courgettes.pdf' },
-  { id: 'docs-plats-oeufs-brouilles', name: 'Oeufs brouillés aux légumes', file: 'Docs/Plats/Oeufs brouillés aux légumes.pdf' },
-  { id: 'docs-plats-paupiette-poulet', name: 'Paupiette de poulet au jambon et olives', file: 'Docs/Plats/Paupiette de poulet au jambon et olives.pdf' },
-  { id: 'docs-plats-pizza-equilibree', name: 'Pizza équilibrée faite maison', file: 'Docs/Plats/Pizza équilibrée faite maison.pdf' },
-  { id: 'docs-plats-plumes-chef', name: 'Plumes du chef', file: 'Docs/Plats/Plumes du chef.docx' },
-  { id: 'docs-plats-poisson-pane-avoine', name: 'Poisson blanc pané aux flocons d\'avoine', file: 'Docs/Plats/Poisson blanc pané aux flocons d\'avoine.pdf' },
-  { id: 'docs-plats-poivrons-farcis', name: 'Poivrons farcis au poulet courgette semoule et coulis de tomates', file: 'Docs/Plats/Poivrons farcis au poulet courgette semoule et coulis de tomates.pdf' },
-  { id: 'docs-plats-poelee-pdt-bacon', name: 'Poêlée de pommes de terre bacon oeufs et petits légumes', file: 'Docs/Plats/Poêlée de pommes de terre bacon oeufs et petits légumes.pdf' },
-  { id: 'docs-plats-pates-brioches-choco', name: 'Pâtes brioches aux pépites de chocolat', file: 'Docs/Plats/Pâtes brioches aux pépites de chocolat.pdf' },
-  { id: 'docs-plats-pates-complètes-scampis', name: 'Pâtes complètes aux légumes et aux scampis', file: 'Docs/Plats/Pâtes complètes aux légumes et aux scampis.pdf' },
-  { id: 'docs-plats-pates-brocoli-oeuf-jambon', name: 'Pâtes complètes brocoli oeuf et jambon bacon', file: 'Docs/Plats/Pâtes complètes brocoli oeuf et jambon bacon.pdf' },
-  { id: 'docs-plats-pates-jambon-italien', name: 'Pâtes jambon italien parmesan', file: 'Docs/Plats/Pâtes jambon italien parmesan.pdf' },
-  { id: 'docs-plats-pates-sauce-poivrons', name: 'Pâtes sauce aux poivronscarottes jambon cuit de Malmedy et courgettes', file: 'Docs/Plats/Pâtes sauce aux poivronscarottes jambon cuit de Malmedy et courgettes.pdf' },
-  { id: 'docs-plats-pates-tomates-aubergine-burrata', name: 'Pâtes tomates aubergine et burrata', file: 'Docs/Plats/Pâtes tomates aubergine et burrata.pdf' },
-  { id: 'docs-plats-peche-thon-salade', name: 'Pêche au thon salade de pâtes aux légumes et salade', file: 'Docs/Plats/Pêche au thon salade de pâtes aux légumes et salade.pdf' },
-  { id: 'docs-plats-quiche-legumes-mozza', name: 'Quiche aux légumes et à la mozzarella', file: 'Docs/Plats/Quiche aux légumes et à la mozzarella.pdf' },
-  { id: 'docs-plats-quiche-oignons-poireaux', name: 'Quiche oignons poireaux et allumettes de bacon', file: 'Docs/Plats/Quiche oignons poireaux et allumettes de bacon.pdf' },
-  { id: 'docs-plats-quinoa-legumes-ete', name: 'Quinoa aux légumes d\'été', file: 'Docs/Plats/Quinoa aux légumes d\'été.pdf' },
-  { id: 'docs-plats-quinoa-mais-haricots', name: 'Quinoa maïs et haricots rouges', file: 'Docs/Plats/Quinoa maïs et haricots rouges.pdf' },
-  { id: 'docs-plats-riz-basmati-saumon', name: 'Riz basmati au saumon pois gourmand et lait de coco', file: 'Docs/Plats/Riz basmati au saumon pois gourmand et lait de coco.pdf' },
-  { id: 'docs-plats-salade-ete', name: 'Salade d\'été', file: 'Docs/Plats/Salade d\'été.pdf' },
-  { id: 'docs-plats-samossas-courgette-chevre', name: 'Samossas courgette et chèvre', file: 'Docs/Plats/Samossas courgette et chèvre.pdf' },
-  { id: 'docs-plats-sauce-tomates-haricots', name: 'Sauce tomates aux haricots rouges', file: 'Docs/Plats/Sauce tomates aux haricots rouges.pdf' },
-  { id: 'docs-plats-soupe-nouilles-epicee', name: 'Soupe de nouilles légèrement épicée', file: 'Docs/Plats/Soupe de nouilles légèrement épicée.pdf' },
-  { id: 'docs-plats-tarte-oignons-poivrons-feta', name: 'Tarte oignons poivrons feta et pois chiches', file: 'Docs/Plats/Tarte oignons poivrons feta et pois chiches.pdf' },
-  { id: 'docs-plats-tarte-salee-epinards-poivron-lieu', name: 'Tarte salée épinards poivron et lieu jaune', file: 'Docs/Plats/Tarte salée épinards poivron et lieu jaune.pdf' },
-  { id: 'docs-plats-tartiflette', name: 'Tartiflette plus ou moins légère', file: 'Docs/Plats/Tartiflette plus ou moins légère.pdf' },
-  { id: 'docs-plats-tomate-crevettes', name: 'Tomate crevettes salade de pâtes froides et salade aux graines oléagineuses', file: 'Docs/Plats/Tomate crevettes salade de pâtes froides et salade aux graines oléagineuses.pdf' },
-  { id: 'docs-plats-tortiglioni-champignons', name: 'Tortiglioni sauce légère aux champignons', file: 'Docs/Plats/Tortiglioni sauce légère aux champignons.pdf' },
-  { id: 'docs-plats-wraps', name: 'Wraps maison', file: 'Docs/Plats/Wraps maison.pdf' },
-
-  // Desserts
-  { id: 'docs-desserts-cantuchini', name: 'cantuchini', file: 'Docs/Desserts/cantuchini.pdf' },
-  { id: 'docs-desserts-clafoutis-framboises-myrtilles', name: 'Clafoutis aux framboises et myrtilles', file: 'Docs/Desserts/Clafoutis aux framboises et myrtilles.pdf' },
-  { id: 'docs-desserts-flans-legumes', name: 'Flans aux légumes', file: 'Docs/Desserts/Flans aux légumes.pdf' },
-  { id: 'docs-desserts-gateau-choco-laurie', name: 'Gâteau au chocolat de Laurie', file: 'Docs/Desserts/Gâteau au chocolat de Laurie.docx' },
-  { id: 'docs-desserts-gateau-choco-domi', name: 'Gâteau au chocolat domi', file: 'Docs/Desserts/Gâteau au chocolat domi.pdf' },
-  { id: 'docs-desserts-gateau-flocons-avoine', name: 'Gâteau aux flocons d\'avoine pomme de terre cannelle', file: 'Docs/Desserts/Gâteau aux flocons d\'avoine pomme de terre cannelle.pdf' },
-  { id: 'docs-desserts-pudding-vanille', name: 'Pudding à la vanille', file: 'Docs/Desserts/Pudding à la vanille.pdf' },
-  { id: 'docs-desserts-riz-au-lait', name: 'Riz au lait', file: 'Docs/Desserts/Riz au lait.pdf' },
-  { id: 'docs-desserts-torta-paradiso', name: 'Torta Paradiso', file: 'Docs/Desserts/Torta Paradiso.docx' },
-
-  // Apéro
-  { id: 'docs-apero-boulettes-flocons-courgette', name: 'Boulettes apéritives aux flocons d\'avoine et à la courgette', file: 'Docs/Apéro/Boulettes apéritives aux flocons d\'avoine et à la courgette.pdf' },
-  { id: 'docs-apero-pois-chiches-grilles', name: 'Pois chiches grillés pour l\'apéro', file: 'Docs/Apéro/Pois chiches grillés pour l\'apéro.pdf' },
-  { id: 'docs-apero-roules-courgettes-saumon', name: 'Roulés apéritifs de courgettes au saumon fumé', file: 'Docs/Apéro/Roulés apéritifs de courgettes au saumon fumé.pdf' },
-  { id: 'docs-apero-toasts-crevettes', name: 'Toasts crevettes tomates sechées', file: 'Docs/Apéro/Toasts crevettes tomates sechées.pdf' },
-
-  // En-cas
-  { id: 'docs-encas-biscuits-fromage-blanc', name: 'Biscuits au fromage blanc et au yaourt nature pépites de chocolat', file: 'Docs/En-cas/Biscuits au fromage blanc et au yaourt nature pépites de chocolat.pdf' },
-  { id: 'docs-encas-biscuits-avoine-banane', name: 'Biscuits avoine banane choco', file: 'Docs/En-cas/Biscuits avoine banane choco.pdf' },
-  { id: 'docs-encas-cake-courgettes-chevre', name: 'Cake courgettes et chèvre', file: 'Docs/En-cas/Cake courgettes et chèvre.pdf' },
-  { id: 'docs-encas-crunchy-muesli', name: 'Crunchy muesli - Granola', file: 'Docs/En-cas/Crunchy muesli - Granola.pdf' },
-  { id: 'docs-encas-gaufres-banane', name: 'Gaufres à la banane', file: 'Docs/En-cas/Gaufres à la banane.pdf' },
-  { id: 'docs-encas-granola-noisettes-choco', name: 'Granola aux noisettes et au chocolat noir', file: 'Docs/En-cas/Granola aux noisettes et au chocolat noir.pdf' },
-  { id: 'docs-encas-minis-cakes-sales', name: 'Minis cakes salés courgette carottes et filet de Saxe', file: 'Docs/En-cas/Minis cakes salés courgette carottes et filet de Saxe.pdf' },
-  { id: 'docs-encas-muffins-choco-courgette', name: 'Muffins chocolat noir et courgette', file: 'Docs/En-cas/Muffins chocolat noir et courgette.pdf' },
-
-  // Petits déjeuner
-  { id: 'docs-petitdej-pancakes-yaourt', name: 'Pancakes au yaourt', file: 'Docs/Petits déjeuner/Pancakes au yaourt.pdf' },
-  { id: 'docs-petitdej-pancakes-banane', name: 'Pancakes à la banane', file: 'Docs/Petits déjeuner/Pancakes à la banane.pdf' },
-  { id: 'docs-petitdej-pancakes-compote', name: 'Pancakes à la compote de pommes', file: 'Docs/Petits déjeuner/Pancakes à la compote de pommes.pdf' },
-  { id: 'docs-petitdej-pancakes-patate-douce', name: 'Pancakes à la patate douce', file: 'Docs/Petits déjeuner/Pancakes à la patate douce.pdf' },
-];
-
-for (const d of docs) {
-  SEED_RECIPES.push({
-    id: d.id,
-    name: d.name,
-    cat: null,
-    time: 20,
-    portions: 4,
-    ingredients: [],
-    steps: [],
-    file: d.file,
-  });
-}
+// === RECETTES DU DOSSIER Docs ===
+// Reconstituées à partir des titres (les PDF d'origine sont perdus) — voir data-docs.js.
+for (const rec of DOCS_RECIPES) SEED_RECIPES.push(rec);
 
 // Classifier toutes les recettes qui n'ont pas de catégorie
 for (const rec of SEED_RECIPES) {
