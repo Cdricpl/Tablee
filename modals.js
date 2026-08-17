@@ -568,7 +568,7 @@ export function openMenuLibre(opts = {}) {
 
     dynEl.append(h('div', { class: 'btn-row', style: 'margin-top:14px;flex-wrap:wrap' },
       hasApiKey()
-        ? h('button', { class: 'btn', disabled: busy ? 'disabled' : null, onclick: callLlm },
+        ? h('button', { class: 'btn', disabled: busy ? 'disabled' : null, onclick: () => callLlm() },
             icon.sparkle(),
             busy ? 'Recherche IA…'
                  : (matches.length ? 'Autres suggestions (consomme API)' : 'Générer une recette (consomme API)'))
@@ -612,7 +612,7 @@ export function openMenuLibre(opts = {}) {
           if (r.id && state.recipes.find(x => x.id === r.id)) openRecipe(r.id, { portions: finalPortions });
           else openRecipeObject(r, { portions: finalPortions });
         } }, 'Voir'),
-        fromLLM ? h('button', { class: 'btn', onclick: () => { busy = true; refresh(); callLlm({ skipCache: true }); } }, 'Générer une autre') : null,
+        fromLLM ? h('button', { class: 'btn', onclick: () => callLlm() }, 'Générer une autre') : null,
         h('button', { class: 'btn primary', onclick: () => {
           let id = r.id;
           const existing = state.recipes.find(x => x.id === id);
@@ -629,11 +629,11 @@ export function openMenuLibre(opts = {}) {
     );
   }
 
-  async function callLlm(callOpts = {}) {
-    if (!input.trim() || !hasApiKey()) return;
+  async function callLlm() {
+    if (!input.trim() || !hasApiKey() || busy) return;
     busy = true; error = null; llmResult = null; refresh();
     try {
-      llmResult = await llmMatchOrCreate(input, state.recipes, callOpts);
+      llmResult = await llmMatchOrCreate(input, state.recipes);
       try { localStorage.setItem('tablee.lastAI', JSON.stringify(llmResult)); } catch (_) {}
     } catch (err) {
       error = err.message || 'Erreur IA';

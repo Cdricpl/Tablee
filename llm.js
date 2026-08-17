@@ -18,13 +18,16 @@ const MODEL_FAST = 'gemini-2.5-flash';
 const MODEL_SMART = 'gemini-2.5-flash'; // flash gère aussi très bien la vision/PDF
 const ENDPOINT = m => `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`;
 
-async function callGemini({ system, parts, model = MODEL_FAST, jsonOnly = true }) {
+async function callGemini({ system, parts, model = MODEL_FAST, jsonOnly = true, temperature }) {
   const apiKey = getApiKey();
   if (!apiKey) throw new Error('Clé API manquante (Réglages)');
+  const genConfig = {};
+  if (jsonOnly) genConfig.response_mime_type = 'application/json';
+  if (temperature != null) genConfig.temperature = temperature;
   const body = {
     system_instruction: system ? { parts: [{ text: system }] } : undefined,
     contents: [{ role: 'user', parts }],
-    generation_config: jsonOnly ? { response_mime_type: 'application/json' } : undefined,
+    generation_config: Object.keys(genConfig).length ? genConfig : undefined,
   };
   let res;
   try {
@@ -83,40 +86,45 @@ const RECIPE_SCHEMA_DESC = `{
 
 const UNITS_HINT = 'Unités autorisées: g, kg, ml, cl, l, pc, cc, cs, pincée, gousse, branche, botte, tranche.';
 
-// Cache des résultats LLM générés (matchedExisting=false), TTL 24h
-const LLM_CACHE_KEY = 'tablee.llmCache';
-const LLM_CACHE_TTL = 24 * 60 * 60 * 1000;
+// Mémoire des plats déjà proposés pour une même description.
+// Une demande de génération relance TOUJOURS l'IA (pas de cache de résultat :
+// resservir la recette précédente donnait l'impression que le bouton ne marchait pas).
+// On garde seulement les noms déjà sortis, pour demander autre chose la fois suivante.
+const LLM_RECENT_KEY = 'tablee.llmRecent';
+const LLM_RECENT_TTL = 7 * 24 * 60 * 60 * 1000;
+const RECENT_PER_INPUT = 8;
+const RECENT_MAX_INPUTS = 40;
 const normCacheKey = s => (s || '').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ');
 
-function llmCacheGet(input) {
+function recentGet(input) {
   try {
-    const all = JSON.parse(localStorage.getItem(LLM_CACHE_KEY) || '{}');
+    const all = JSON.parse(localStorage.getItem(LLM_RECENT_KEY) || '{}');
     const e = all[normCacheKey(input)];
-    if (!e) return null;
-    if (Date.now() - e.t > LLM_CACHE_TTL) return null;
-    return e.v;
-  } catch (_) { return null; }
+    if (!e || Date.now() - e.t > LLM_RECENT_TTL) return [];
+    return Array.isArray(e.names) ? e.names : [];
+  } catch (_) { return []; }
 }
-function llmCachePut(input, v) {
+
+function recentPut(input, name) {
+  if (!name) return;
   try {
-    const all = JSON.parse(localStorage.getItem(LLM_CACHE_KEY) || '{}');
-    all[normCacheKey(input)] = { t: Date.now(), v };
-    // Limite simple : 40 entrées max (FIFO grossier)
+    const all = JSON.parse(localStorage.getItem(LLM_RECENT_KEY) || '{}');
+    const k = normCacheKey(input);
+    const prev = (all[k] && Array.isArray(all[k].names)) ? all[k].names : [];
+    const names = [name, ...prev.filter(n => normCacheKey(n) !== normCacheKey(name))].slice(0, RECENT_PER_INPUT);
+    all[k] = { t: Date.now(), names };
     const keys = Object.keys(all);
-    if (keys.length > 40) {
-      const sorted = keys.map(k => [k, all[k].t]).sort((a, b) => a[1] - b[1]);
-      for (let i = 0; i < sorted.length - 40; i++) delete all[sorted[i][0]];
+    if (keys.length > RECENT_MAX_INPUTS) {
+      const sorted = keys.map(x => [x, all[x].t]).sort((a, b) => a[1] - b[1]);
+      for (let i = 0; i < sorted.length - RECENT_MAX_INPUTS; i++) delete all[sorted[i][0]];
     }
-    localStorage.setItem(LLM_CACHE_KEY, JSON.stringify(all));
+    localStorage.setItem(LLM_RECENT_KEY, JSON.stringify(all));
   } catch (_) {}
 }
 
 // === MENU LIBRE ===
-export async function llmMatchOrCreate(input, recipes, opts = {}) {
-  if (!opts.skipCache) {
-    const cached = llmCacheGet(input);
-    if (cached) return cached;
-  }
+export async function llmMatchOrCreate(input, recipes) {
+  const alreadySeen = recentGet(input);
   const recipeIndex = recipes.map(r => `${r.id} :: ${r.name}`).join('\n');
   const system = `Tu aides à choisir un plat dans une bibliothèque culinaire ou à en créer un.
 ${UNITS_HINT}
@@ -131,15 +139,21 @@ ${RECIPE_SCHEMA_DESC}
 
 Réponds UNIQUEMENT en JSON, pas de texte autour.`;
 
+  const avoidBlock = alreadySeen.length
+    ? `\n\nDéjà proposé pour cette description (ne les repropose pas, invente une variante nettement différente : autre technique, autre garniture ou autre inspiration) :\n${alreadySeen.map(n => `- ${n}`).join('\n')}`
+    : '';
+
   const userMsg = `Bibliothèque (${recipes.length} recettes):
 ${recipeIndex}
 
-Description du plat: "${input}"`;
+Description du plat: "${input}"${avoidBlock}`;
 
   const txt = await callGemini({
     system,
     parts: [{ text: userMsg }],
     model: MODEL_FAST,
+    // Température haute : deux clics successifs doivent donner deux plats distincts.
+    temperature: 1.2,
   });
 
   const parsed = parseJsonFromText(txt);
@@ -149,10 +163,8 @@ Description du plat: "${input}"`;
     if (!r) throw new Error('Recette non trouvée dans la bibliothèque');
     return { ...r, matchedExisting: true, portions: parsed.portions || r.portions };
   }
-  const result = { ...parsed, matchedExisting: false };
-  // On cache uniquement les recettes générées (indépendantes du contenu de la bibliothèque)
-  llmCachePut(input, result);
-  return result;
+  recentPut(input, parsed.name);
+  return { ...parsed, matchedExisting: false };
 }
 
 // === IMPORT (image / pdf) ===
