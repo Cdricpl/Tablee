@@ -1,5 +1,5 @@
 // sw.js — service worker minimal pour Tablée (cache offline)
-const CACHE = 'tablee-v17';
+const CACHE = 'tablee-v18';
 const ASSETS = [
   './',
   './index.html',
