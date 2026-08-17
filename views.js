@@ -450,7 +450,27 @@ export function viewMore() {
           `${toCheck} recettes sont marquées « à vérifier » : leur fiche d'origine a été perdue `,
           'et leur contenu a été reconstitué. Ouvrez-les pour corriger les quantités.')
       : null,
+
+    versionLine(),
   );
 
   return root;
+}
+
+// Repère de version : indique quel cache le service worker sert réellement.
+// Sert à vérifier d'un coup d'œil qu'un appareil a bien reçu la dernière version.
+function versionLine() {
+  const el = h('p', { class: 'version-line' }, 'Version : lecture…');
+  const controlled = !!(navigator.serviceWorker && navigator.serviceWorker.controller);
+  if (!window.caches) {
+    el.textContent = 'Version : hors cache (mode navigation directe)';
+    return el;
+  }
+  caches.keys().then(keys => {
+    const mine = keys.filter(k => k.startsWith('tablee-'));
+    el.textContent = mine.length
+      ? `Version : ${mine.join(', ')}${controlled ? '' : ' (service worker inactif)'}`
+      : 'Version : aucun cache installé';
+  }).catch(() => { el.textContent = 'Version : indisponible'; });
+  return el;
 }

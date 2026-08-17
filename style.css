@@ -1559,3 +1559,12 @@ main { padding-bottom: 132px; }
 /* Le toast se place au-dessus de la barre du bas, et remonte encore quand la
    barre de courses est affichée pour ne pas la recouvrir. */
 body:has(.shop-bar) .toast { bottom: 150px; }
+
+.version-line {
+  margin-top: 22px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--olive-text);
+  text-align: center;
+}
