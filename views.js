@@ -1,12 +1,12 @@
 // Les vues de l'app : accueil (Bibliothèque, Semaine, Courses) + les vues
 // transverses de la barre du bas (Favoris, À tester, Recherche, Plus).
 import {
-  state, recipeById, catById,
+  state, recipeById, catById, tagsOf,
   DAYS_FR_LONG, SLOT_LABEL, todayIndex, computeShopping,
 } from './state.js';
 import { h, icon, appendAll } from './dom.js';
 import { fmtTime, formatQty } from './pure.js';
-import { AISLES, CATEGORIES } from './data.js';
+import { AISLES, CATEGORIES, TAGS } from './data.js';
 import {
   openRecipe, openEdit, openImport, openMenuLibre, openSettings,
   openPicker, openManualAdd, openItemMenu, openDayMenu,
@@ -53,7 +53,10 @@ function recipeCard(r) {
       }, fav ? icon.heartFull() : icon.heart()),
     ),
     h('h3', { class: 'card-title' }, r.name),
-    r.reconstructed ? h('span', { class: 'card-flag' }, 'à vérifier') : null,
+    h('div', { class: 'card-tags' },
+      r.reconstructed ? h('span', { class: 'card-flag' }, 'à vérifier') : null,
+      ...tagsOf(r).map(t => h('span', { class: 'card-tag' }, t.emoji, ' ', t.name)),
+    ),
     h('hr', { class: 'dashed' }),
     h('div', { class: 'card-foot' },
       h('span', { class: 'meta' }, icon.clock(), fmtTime(r.time)),
@@ -79,6 +82,9 @@ function emptyState(title, sub, art) {
 // tout en bas. Une sous-page repart du haut.
 export function openCategory(catId) {
   state.filter.cat = catId;
+  // On repart sans filtre d'étiquette : conservé d'une catégorie à l'autre, il
+  // pourrait n'y exister pour aucune recette et donner une liste vide.
+  state.filter.tags = [];
   setView('category');
 }
 
@@ -155,7 +161,7 @@ export function viewLibrary() {
 export function viewCategory() {
   const root = h('section');
   const cat = state.filter.cat ? catById(state.filter.cat) : null;
-  const list = cat ? state.recipes.filter(r => r.cat === cat.id) : state.recipes;
+  const inCat = cat ? state.recipes.filter(r => r.cat === cat.id) : state.recipes;
 
   // Les puces permettent de passer d'une catégorie à l'autre sans revenir en
   // arrière ; elles remplacent le va-et-vient vers la grille d'accueil.
@@ -170,17 +176,50 @@ export function viewCategory() {
     }, c.emoji, ' ', c.name)),
   );
 
+  // Second axe : les étiquettes de style, cumulables. Seules celles réellement
+  // présentes dans la catégorie sont proposées — offrir « Mijoté » sur les
+  // desserts ne mènerait qu'à une liste vide.
+  const present = TAGS.filter(t => inCat.some(r => r.tags?.includes(t.id)));
+  const active = new Set(state.filter.tags || []);
+  const listEl = h('div');
+  const metaEl = h('p', { class: 'section-meta' });
+
+  function refresh() {
+    const list = [...active].length
+      ? inCat.filter(r => [...active].every(t => r.tags?.includes(t)))
+      : inCat;
+    metaEl.textContent = plural(list.length, 'recette', 'recettes');
+    listEl.replaceChildren(list.length === 0
+      ? emptyState('Aucune recette avec ces filtres.',
+          'Retirez une étiquette pour élargir.')
+      : recipeGrid(list));
+  }
+
+  const tagRow = present.length ? h('div', { class: 'tag-row scroller' },
+    ...present.map(t => h('button', {
+      class: 'tag-chip', 'data-active': active.has(t.id) ? 'true' : 'false',
+      'aria-pressed': active.has(t.id) ? 'true' : 'false',
+      onclick: e => {
+        if (active.has(t.id)) active.delete(t.id); else active.add(t.id);
+        state.filter.tags = [...active];
+        e.currentTarget.dataset.active = active.has(t.id) ? 'true' : 'false';
+        e.currentTarget.setAttribute('aria-pressed', active.has(t.id) ? 'true' : 'false');
+        refresh();
+      },
+    }, t.emoji, ' ', t.name)),
+  ) : null;
+
   appendAll(root,
     backLink('Recettes', 'library'),
     ...pageHead(cat ? 'catégorie' : 'la bibliothèque',
-      '', cat ? cat.name : 'Toutes les recettes',
-      plural(list.length, 'recette', 'recettes')),
+      '', cat ? cat.name : 'Toutes les recettes', null),
     chips,
-    list.length === 0
-      ? emptyState('Aucune recette dans cette catégorie.',
-          'Ajoutez-en une depuis « Mes recettes ».')
-      : recipeGrid(list),
+    tagRow,
+    metaEl,
+    listEl,
   );
+
+  refresh();
 
   // La catégorie ouverte peut se trouver hors champ dans la rangée défilante.
   setTimeout(() => chips.querySelector('.chip[data-active="true"]')

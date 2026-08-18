@@ -10,26 +10,41 @@ export const AISLES = [
   { id: 'misc',   name: 'Divers',                 emoji: '🛒' },
 ];
 
+// Un seul axe : de quoi le plat est fait, ou à quel moment il se mange.
+// Les anciennes catégories de style (rapide, au four, mijoté, économique,
+// familial, du monde, en sauce) mélangeaient un second axe dans le même champ.
+// Comme une recette ne peut porter qu'une catégorie, un poulet au curry devait
+// choisir entre « Volaille » et « Plats du monde » : sur 16 plats au poulet,
+// 9 échappaient à « Volaille ». Ce second axe est devenu TAGS, cumulables.
 export const CATEGORIES = [
-  { id: 'viande',      name: 'Viande',           emoji: '🥩' },
-  { id: 'volaille',    name: 'Volaille',         emoji: '🍗' },
-  { id: 'poisson',     name: 'Poisson',          emoji: '🐟' },
-  { id: 'vege',        name: 'Végétarien',       emoji: '🥗' },
-  { id: 'mijote',      name: 'Mijotés',          emoji: '🍲' },
-  { id: 'rapide',      name: 'Plats rapides',    emoji: '⚡' },
-  { id: 'eco',         name: 'Plats économiques', emoji: '💰' },
-  // Emoji simples : les séquences ZWJ (👨‍👩‍👧) retombent sur un glyphe
-  // monochrome encadré dès qu'une plateforme ne les compose pas.
-  { id: 'famille',     name: 'Plats familiaux',  emoji: '🍽️' },
-  { id: 'monde',       name: 'Plats du monde',   emoji: '🌍' },
-  { id: 'four',        name: 'Plats au four',    emoji: '🔥' },
-  { id: 'sauce',       name: 'Plats en sauce',   emoji: '🥘' },
-  { id: 'dessert',     name: 'Desserts',         emoji: '🍰' },
-  { id: 'encas',       name: 'En-cas',           emoji: '🍪' },
-  { id: 'apero',       name: 'Apéro',            emoji: '🫒' },
-  { id: 'petitdej',    name: 'Petits déj.',      emoji: '🥞' },
-  { id: 'autres',      name: 'Autres',           emoji: '🗂️' },
+  { id: 'viande',   name: 'Viande',      emoji: '🥩' },
+  { id: 'volaille', name: 'Volaille',    emoji: '🍗' },
+  { id: 'poisson',  name: 'Poisson',     emoji: '🐟' },
+  { id: 'vege',     name: 'Végétarien',  emoji: '🥗' },
+  { id: 'dessert',  name: 'Desserts',    emoji: '🍰' },
+  { id: 'encas',    name: 'En-cas',      emoji: '🍪' },
+  { id: 'apero',    name: 'Apéro',       emoji: '🫒' },
+  { id: 'petitdej', name: 'Petits déj.', emoji: '🥞' },
+  { id: 'autres',   name: 'Autres',      emoji: '🗂️' },
 ];
+
+// Second axe, cumulable : le style de préparation.
+export const TAGS = [
+  { id: 'rapide',  name: 'Rapide',      emoji: '⚡' },
+  { id: 'four',    name: 'Au four',     emoji: '🔥' },
+  { id: 'mijote',  name: 'Mijoté',      emoji: '🍲' },
+  { id: 'sauce',   name: 'En sauce',    emoji: '🥘' },
+  { id: 'monde',   name: 'Du monde',    emoji: '🌍' },
+  { id: 'eco',     name: 'Économique',  emoji: '💰' },
+  { id: 'famille', name: 'Familial',    emoji: '🍽️' },
+];
+
+// Correspondance ancienne catégorie de style -> étiquette. Sert à migrer les
+// recettes du dépôt et celles déjà enregistrées chez l'utilisateur.
+export const LEGACY_CAT_TO_TAG = {
+  rapide: 'rapide', four: 'four', mijote: 'mijote',
+  sauce: 'sauce', monde: 'monde', eco: 'eco', famille: 'famille',
+};
 
 export const UNITS = ['g', 'kg', 'ml', 'cl', 'l', 'pc', 'cc', 'cs', 'pincée'];
 
@@ -416,28 +431,83 @@ const r = (id, name, cat, time, portions, ingredients, steps) => ({
   steps,
 });
 
-// Infère une catégorie simple à partir du nom et des ingrédients
+// Normalisation commune aux règles de classement : minuscules, ligatures
+// résolues (œ → oe, sinon « Œuf » échappe au mot-clé « oeuf ») et accents ôtés.
+const classifyNorm = s => String(s || '').toLowerCase()
+  .replace(/œ/g, 'oe').replace(/æ/g, 'ae')
+  .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+const recipeHaystack = (name, ingredients = [], steps = []) => classifyNorm(
+  name + ' ' +
+  (Array.isArray(ingredients) ? ingredients.map(i => i.name || '').join(' ') : '') + ' ' +
+  (Array.isArray(steps) ? steps.join(' ') : ''));
+
+// Le sucré est testé en premier : une brioche aux pépites contient « pâte » et
+// atterrirait sinon dans les plats végétariens.
+const SWEET_KEYS = ['chocolat', 'sucre', 'brioche', 'gateau', 'crepe', 'compote',
+  'confiture', 'miel', 'vanille', 'caramel', 'biscuit', 'cookie', 'muffin'];
+
+const MAIN_KEYS = [
+  { id: 'volaille', keys: ['poulet', 'dinde', 'volaille', 'pintade', 'canard'] },
+  { id: 'poisson',  keys: ['saumon', 'cabillaud', 'truite', 'crevet', 'poisson', 'thon',
+    'colin', 'lieu', 'merlu', 'moule', 'calamar', 'sardine'] },
+  { id: 'viande',   keys: ['boeuf', 'porc', 'agneau', 'veau', 'steak', 'hach', 'jambon',
+    'lardon', 'merguez', 'saucisse', 'chorizo', 'bacon'] },
+  { id: 'vege',     keys: ['tofu', 'lentil', 'pois chiche', 'quinoa', 'courgett', 'aubergin',
+    'brocoli', 'epinard', 'haricot', 'champignon', 'legume', 'chou', 'carotte',
+    'patate douce', 'panais', 'potimarron', 'courge', 'poireau', 'poivron', 'celeri',
+    'navet', 'betterave', 'oeuf', 'riz', 'pate', 'semoule', 'boulgour'] },
+];
+
+// Catégorie sur l'axe unique : ingrédient principal, ou moment du repas.
 export function inferCategory(name, ingredients = []) {
-  const src = (name + ' ' + (Array.isArray(ingredients) ? ingredients.map(i => i.name || '').join(' ') : '')).toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-
-  const map = [
-    { id: 'volaille', keys: ['poulet', 'dinde', 'cuisses', 'blanc de poulet'] },
-    { id: 'poisson',  keys: ['saumon', 'cabillaud', 'truite', 'crevet', 'poisson', 'thon'] },
-    { id: 'viande',   keys: ['boeuf', 'boeuf', 'porc', 'agneau', 'steak', 'hach', 'jambon', 'lardon', 'merguez', 'hamburger'] },
-    { id: 'vege',     keys: ['tofu', 'lentil', 'pois chiche', 'quinoa', 'salade', 'courgett', 'aubergin', 'brocoli', 'epinard'] },
-    { id: 'mijote',   keys: ['tajine', 'mijot', 'bourguignon', 'blanquette', 'tajine'] },
-    { id: 'monde',    keys: ['pad thai', 'pad-thai', 'paella', 'couscous', 'chili', 'mexic', 'thai', 'curry'] },
-    { id: 'four',     keys: ['lasagne', 'quiche', 'gratin', 'tarte', 'pizza', 'four'] },
-    { id: 'rapide',   keys: ['omelette', 'wrap', 'sandwich', 'croque', 'pancake', 'wok', 'carbonara', 'pate', 'pâtes', 'pates'] },
-    { id: 'sauce',    keys: ['sauce', 'bolognaise', 'basquaise', 'tomate'] },
-    { id: 'eco',      keys: ['riz', 'lentil', 'dahl', 'econom'] },
-  ];
-
-  for (const entry of map) {
-    for (const k of entry.keys) if (src.includes(k)) return entry.id;
-  }
+  const hay = recipeHaystack(name, ingredients);
+  if (SWEET_KEYS.some(k => hay.includes(k))) return 'dessert';
+  for (const e of MAIN_KEYS) for (const k of e.keys) if (hay.includes(k)) return e.id;
   return 'autres';
+}
+
+const TAG_KEYS = [
+  { id: 'four',   keys: ['gratin', 'lasagne', 'quiche', 'tarte', 'pizza', 'au four',
+    'enfourner', 'four prechauffe', 'cake'] },
+  { id: 'mijote', keys: ['mijot', 'tajine', 'bourguignon', 'blanquette', 'pot-au-feu',
+    'ragout', 'laisser cuire a feu doux'] },
+  { id: 'monde',  keys: ['curry', 'thai', 'paella', 'couscous', 'chili', 'wok', 'tex-mex',
+    'mexic', 'asiat', 'tandoori', 'massala', 'tajine'] },
+  { id: 'sauce',  keys: ['bolognaise', 'basquaise', 'sauce ', 'en sauce', 'creme fraiche',
+    'veloute'] },
+  { id: 'eco',    keys: ['lentil', 'pois chiche', 'haricot sec', 'dahl', 'conserve'] },
+];
+
+// Étiquettes de style, cumulables. Déduites du nom, des ingrédients et des
+// étapes, plus deux critères objectifs : la durée et le nombre de portions.
+export function deriveTags(recipe) {
+  const hay = recipeHaystack(recipe.name, recipe.ingredients, recipe.steps);
+  const tags = new Set();
+  for (const t of TAG_KEYS) if (t.keys.some(k => hay.includes(k))) tags.add(t.id);
+  if (recipe.time > 0 && recipe.time <= 30) tags.add('rapide');
+  if (recipe.portions >= 6) tags.add('famille');
+  return [...tags];
+}
+
+// Met une recette au nouveau format : catégorie sur l'axe unique, étiquettes
+// cumulables. Une ancienne catégorie de style devient une étiquette et la
+// catégorie est recalculée. Idempotent : réappliquer ne change rien.
+export function normalizeRecipeTaxonomy(recipe) {
+  const known = CATEGORIES.some(c => c.id === recipe.cat);
+  const legacy = LEGACY_CAT_TO_TAG[recipe.cat];
+  const tags = new Set(Array.isArray(recipe.tags) ? recipe.tags : []);
+
+  if (legacy) tags.add(legacy);
+  if (legacy || !known || recipe.cat === 'autres') {
+    const cat = inferCategory(recipe.name, recipe.ingredients);
+    // « autres » ne progresse que si l'inférence trouve mieux.
+    if (cat !== 'autres' || !known) recipe.cat = cat;
+  }
+
+  for (const t of deriveTags(recipe)) tags.add(t);
+  recipe.tags = [...tags].filter(t => TAGS.some(x => x.id === t));
+  return recipe;
 }
 
 export const SEED_RECIPES = [
@@ -870,9 +940,12 @@ export const SEED_RECIPES = [
 // Reconstituées à partir des titres (les PDF d'origine sont perdus) — voir data-docs.js.
 for (const rec of DOCS_RECIPES) SEED_RECIPES.push(rec);
 
-// Classifier toutes les recettes qui n'ont pas de catégorie
+// Mise au nouveau format : catégorie sur l'axe unique + étiquettes de style.
+// Les littéraux plus haut portent encore, pour certains, une ancienne catégorie
+// de style ; cette passe la convertit en étiquette et recalcule la catégorie.
 for (const rec of SEED_RECIPES) {
   if (!rec.cat) rec.cat = inferCategory(rec.name, rec.ingredients || []);
+  normalizeRecipeTaxonomy(rec);
 }
 
 // Réparer la recette mijoté de poisson — colle au screenshot d'origine

@@ -1247,13 +1247,6 @@ body:has(.shop-bar) main { padding-bottom: 164px; }
 .cat-photo[data-cat="volaille"] { --tile-a: #dda962; --tile-b: #b87c33; }
 .cat-photo[data-cat="poisson"]  { --tile-a: #93aebd; --tile-b: #5b8098; }
 .cat-photo[data-cat="vege"]     { --tile-a: #a0b271; --tile-b: #6f8b47; }
-.cat-photo[data-cat="mijote"]   { --tile-a: #c98e66; --tile-b: #97603d; }
-.cat-photo[data-cat="rapide"]   { --tile-a: #e0bb62; --tile-b: #bf9130; }
-.cat-photo[data-cat="eco"]      { --tile-a: #a7b186; --tile-b: #7b8a5b; }
-.cat-photo[data-cat="famille"]  { --tile-a: #d9977c; --tile-b: #b06a4e; }
-.cat-photo[data-cat="monde"]    { --tile-a: #83ada0; --tile-b: #527f73; }
-.cat-photo[data-cat="four"]     { --tile-a: #d68a51; --tile-b: #ab5c28; }
-.cat-photo[data-cat="sauce"]    { --tile-a: #b8745d; --tile-b: #8a4936; }
 .cat-photo[data-cat="dessert"]  { --tile-a: #dda4a9; --tile-b: #b5747e; }
 .cat-photo[data-cat="encas"]    { --tile-a: #cfa576; --tile-b: #a67a49; }
 .cat-photo[data-cat="apero"]    { --tile-a: #9aa972; --tile-b: #6c7f49; }
@@ -1288,8 +1281,7 @@ body:has(.shop-bar) main { padding-bottom: 164px; }
 .card-fav[data-on="true"] { color: var(--terra); }
 .card-flag {
   display: inline-block;
-  margin-top: 6px;
-  padding: 2px 8px;
+  padding: 3px 8px;
   border: 1px solid rgba(196, 74, 42, 0.4);
   border-radius: 999px;
   font-family: var(--mono);
@@ -1519,6 +1511,75 @@ body:has(.shop-bar) main { padding-bottom: 164px; }
   color: var(--olive-text);
   margin: 0;
   line-height: 1.35;
+}
+
+/* --- Étiquettes de style (second axe, cumulable) --- */
+/* Visuellement distinctes des puces de catégorie : celles-ci choisissent une
+   catégorie (exclusif), celles-là cumulent des filtres. */
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 0 0 16px;
+}
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: 1px dashed var(--olive-dim);
+  border-radius: 4px;
+  padding: 6px 11px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--olive-text);
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+.tag-chip:hover { border-color: var(--olive); color: var(--ink); }
+
+/* Sept étiquettes occupaient trois lignes et repoussaient les recettes hors
+   de l'écran : même traitement défilant que les puces de catégorie. Dans le
+   formulaire d'édition la rangée reste sur plusieurs lignes, tout doit s'y voir. */
+.tag-row.scroller {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  margin-left: calc(var(--page-x) * -1);
+  margin-right: calc(var(--page-x) * -1);
+  padding: 2px var(--page-x) 12px;
+}
+.tag-row.scroller::-webkit-scrollbar { display: none; }
+.tag-row.scroller .tag-chip { flex: 0 0 auto; }
+.tag-chip[data-active="true"] {
+  background: var(--ink-deep);
+  border-style: solid;
+  border-color: var(--ink-deep);
+  color: var(--cream);
+}
+
+/* Étiquettes sur la carte recette : informatives, non cliquables. */
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 14px;
+}
+.card-tags:empty { display: none; }
+.card-tag {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--olive-text);
+  border: 1px solid var(--card-edge);
+  border-radius: 999px;
+  padding: 3px 8px;
+  white-space: nowrap;
 }
 
 /* --- Puces de catégorie (recherche) --- */

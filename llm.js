@@ -1,6 +1,8 @@
 // llm.js — intégration Gemini API côté navigateur
 // Stocke la clé en localStorage. La clé n'est envoyée qu'à generativelanguage.googleapis.com.
 
+import { normalizeRecipeTaxonomy } from './data.js';
+
 const KEY = 'tablee.apiKey';
 
 export function hasApiKey() { return !!localStorage.getItem(KEY); }
@@ -77,7 +79,8 @@ function parseJsonFromText(text) {
 
 const RECIPE_SCHEMA_DESC = `{
   "name": "Nom du plat",
-  "cat": "viande|volaille|poisson|vege|mijote|rapide|eco|famille|monde|four|sauce",
+  "cat": "viande|volaille|poisson|vege|dessert|encas|apero|petitdej",
+  "tags": ["rapide", "four", "mijote", "sauce", "monde", "eco", "famille"],
   "time": 30,
   "portions": 4,
   "ingredients": [{"qty": 600, "unit": "g", "name": "Bœuf"}],
@@ -164,7 +167,9 @@ Description du plat: "${input}"${avoidBlock}`;
     return { ...r, matchedExisting: true, portions: parsed.portions || r.portions };
   }
   recentPut(input, parsed.name);
-  return { ...parsed, matchedExisting: false };
+  // Le modèle peut renvoyer une catégorie ou des étiquettes hors liste malgré
+  // la consigne : on repasse par les mêmes règles que le reste de l'app.
+  return { ...normalizeRecipeTaxonomy({ ...parsed }), matchedExisting: false };
 }
 
 // === IMPORT (image / pdf) ===
@@ -189,7 +194,8 @@ ${RECIPE_SCHEMA_DESC}
 
 Règles:
 - "name" en français, capitalisée naturellement
-- "cat" parmi: viande, volaille, poisson, vege, mijote, rapide, eco, famille, monde, four, sauce
+- "cat" : une seule valeur, l'ingrédient principal ou le moment du repas — viande, volaille, poisson, vege, dessert, encas, apero, petitdej
+- "tags" : liste, éventuellement vide, du style de préparation — rapide, four, mijote, sauce, monde, eco, famille
 - "time" en minutes (estime si non précisé)
 - "portions" (4 par défaut si non précisé)
 - "ingredients": noms en français, quantités numériques
@@ -204,5 +210,5 @@ Règles:
     model: MODEL_SMART,
   });
 
-  return parseJsonFromText(txt);
+  return normalizeRecipeTaxonomy(parseJsonFromText(txt));
 }

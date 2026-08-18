@@ -7,8 +7,8 @@ import {
 import { $, h, closeModal, toast, field, icon } from './dom.js';
 import { newId, fmtTime, cap, localMatch, detectPortions, formatQty } from './pure.js';
 import {
-  AISLES, CATEGORIES, UNITS, INGREDIENT_DB,
-  aisleFor, defaultUnitFor, normalizeIngredient, aisleEmojiOf,
+  AISLES, CATEGORIES, TAGS, UNITS, INGREDIENT_DB,
+  aisleFor, defaultUnitFor, normalizeIngredient, aisleEmojiOf, normalizeRecipeTaxonomy,
 } from './data.js';
 import {
   llmMatchOrCreate, llmExtractFromFile, hasApiKey, getApiKey, setApiKey,
@@ -236,17 +236,24 @@ export function openEdit(id, prefill) {
   const isNew = !id;
   const existing = isNew ? null : recipeById(id);
   if (!isNew && !existing) { toast('Recette introuvable'); return; }
+  // « famille » était la catégorie par défaut : elle n'existe plus depuis le
+  // passage à un axe unique. « autres » est neutre, et save() recalcule de
+  // toute façon la catégorie quand l'utilisateur n'a rien choisi de mieux.
   const r = isNew
     ? (prefill
-      ? { id: null, name: prefill.name || '', cat: prefill.cat || 'famille', time: prefill.time || 30, portions: prefill.portions || 4,
+      ? { id: null, name: prefill.name || '', cat: prefill.cat || 'autres', time: prefill.time || 30, portions: prefill.portions || 4,
           ingredients: (prefill.ingredients || []).map(i => ({...i})),
           steps: [...(prefill.steps || [''])],
+          tags: [...(prefill.tags || [])],
           photo: prefill.photo }
-      : { id: null, name: '', cat: 'famille', time: 30, portions: 4,
-          ingredients: [{ qty: 0, unit: 'g', name: '' }], steps: [''] })
+      : { id: null, name: '', cat: 'autres', time: 30, portions: 4,
+          ingredients: [{ qty: 0, unit: 'g', name: '' }], steps: [''], tags: [] })
+    // Copie du tableau d'étiquettes : sans elle, cocher puis annuler modifiait
+    // quand même la recette d'origine, partagée par référence.
     : { ...existing,
         ingredients: existing.ingredients.map(i => ({...i})),
-        steps: [...existing.steps] };
+        steps: [...existing.steps],
+        tags: [...(existing.tags || [])] };
 
   state.modal = { type: 'edit' };
   $('#modal').hidden = false;
@@ -295,6 +302,24 @@ export function openEdit(id, prefill) {
           oninput: e => r.time = +e.target.value || 1,
         })),
       ),
+
+      // Étiquettes : second axe, cumulable, contrairement à la catégorie.
+      field('Étiquettes', h('div', { class: 'tag-row' },
+        ...TAGS.map(t => h('button', {
+          type: 'button',
+          class: 'tag-chip',
+          'data-active': r.tags?.includes(t.id) ? 'true' : 'false',
+          'aria-pressed': r.tags?.includes(t.id) ? 'true' : 'false',
+          onclick: e => {
+            if (!Array.isArray(r.tags)) r.tags = [];
+            const i = r.tags.indexOf(t.id);
+            if (i >= 0) r.tags.splice(i, 1); else r.tags.push(t.id);
+            const on = r.tags.includes(t.id);
+            e.currentTarget.dataset.active = on ? 'true' : 'false';
+            e.currentTarget.setAttribute('aria-pressed', on ? 'true' : 'false');
+          },
+        }, t.emoji, ' ', t.name)),
+      )),
 
       h('div', { class: 'row-head' },
         h('label', { class: 'field-label' }, 'Ingrédients'),
@@ -346,6 +371,9 @@ export function openEdit(id, prefill) {
     if (isNew) {
       r.id = newId(r.name);
       r.source = 'user';
+      // Sans étiquette choisie, on en déduit depuis le contenu ; une catégorie
+      // laissée sur « autres » est également réévaluée.
+      if (!r.tags?.length || r.cat === 'autres') normalizeRecipeTaxonomy(r);
       state.recipes.push(r);
     } else {
       const existing = recipeById(id);

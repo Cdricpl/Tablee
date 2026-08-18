@@ -1,7 +1,7 @@
 // État global, persistance, lookups.
 import {
-  SEED_RECIPES, INGREDIENT_DB, CATEGORIES,
-  aisleFor, normalizeIngredient, aisleEmojiOf,
+  SEED_RECIPES, INGREDIENT_DB, CATEGORIES, TAGS,
+  aisleFor, normalizeIngredient, aisleEmojiOf, normalizeRecipeTaxonomy,
 } from './data.js';
 
 export const STORAGE_KEY = 'tablee.v1';
@@ -22,7 +22,7 @@ export const defaultState = () => ({
   favorites: [],
   toTry: [],
   view: 'library',
-  filter: { cat: null, q: '' },
+  filter: { cat: null, q: '', tags: [] },
 });
 
 export const state = (() => {
@@ -30,7 +30,12 @@ export const state = (() => {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
     if (saved && saved.recipes) {
       const seedIds = new Set(SEED_RECIPES.map(r => r.id));
-      const userRecipes = saved.recipes.filter(r => !seedIds.has(r.id));
+      // Les recettes enregistrées avant la refonte portent une ancienne
+      // catégorie de style ; sans cette conversion elles seraient introuvables
+      // (leur catégorie n'existe plus) et leur carte afficherait un vide.
+      const userRecipes = saved.recipes
+        .filter(r => !seedIds.has(r.id))
+        .map(normalizeRecipeTaxonomy);
       return {
         ...defaultState(),
         ...saved,
@@ -38,7 +43,7 @@ export const state = (() => {
         favorites: Array.isArray(saved.favorites) ? saved.favorites : [],
         toTry: Array.isArray(saved.toTry) ? saved.toTry : [],
         view: 'library',
-        filter: { cat: null, q: '' },
+        filter: { cat: null, q: '', tags: [] },
       };
     } else if (saved && saved.shopping) {
       return {
@@ -108,6 +113,8 @@ document.addEventListener('visibilitychange', () => {
 });
 
 export const catById = id => CATEGORIES.find(c => c.id === id);
+export const tagById = id => TAGS.find(t => t.id === id);
+export const tagsOf = r => (r?.tags || []).map(tagById).filter(Boolean);
 export const recipeById = id => state.recipes.find(r => r.id === id);
 
 // Dérivation de la liste de courses depuis la semaine + ajouts manuels.
