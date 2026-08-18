@@ -7,7 +7,6 @@ import {
 export const STORAGE_KEY = 'tablee.v1';
 export const USER_AISLES_KEY = 'tablee.userAisles';
 
-export const DAYS_FR = ['Lun.', 'Mar.', 'Mer.', 'Jeu.', 'Ven.', 'Sam.', 'Dim.'];
 export const DAYS_FR_LONG = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 export const SLOT_LABEL = { lunch: 'Déjeuner', dinner: 'Dîner' };
 
@@ -25,9 +24,6 @@ export const defaultState = () => ({
   view: 'library',
   filter: { cat: null, q: '' },
 });
-
-// Les vues atteignables depuis la barre du bas ou les onglets.
-export const VIEWS = ['library', 'week', 'shopping', 'favorites', 'totry', 'search', 'more'];
 
 export const state = (() => {
   try {

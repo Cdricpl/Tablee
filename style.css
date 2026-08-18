@@ -898,7 +898,6 @@ main {
 }
 
 /* utilities */
-.row-spread { display: flex; justify-content: space-between; align-items: center; }
 .muted { color: var(--olive-text); }
 .hidden-input { display: none; }
 

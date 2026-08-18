@@ -401,13 +401,6 @@ export function aisleEmojiOf(aisleId) {
   return a?.emoji || '🛒';
 }
 
-export function emojiFor(name) {
-  const n = normalizeIngredient(name);
-  if (INGREDIENT_DB[n]) return INGREDIENT_DB[n].emoji;
-  // fallback: emoji du rayon trouvé par heuristique (ne donne plus 🛒 sauf pour Divers)
-  return aisleEmojiOf(aisleFor(name));
-}
-
 export function defaultUnitFor(name) {
   const n = normalizeIngredient(name);
   if (INGREDIENT_DB[n]) return INGREDIENT_DB[n].unit;
