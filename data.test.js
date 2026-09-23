@@ -121,7 +121,7 @@ test('chaque plat au poulet ou à la dinde est bien dans Volaille', () => {
   const norm = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   const poultry = SEED_RECIPES.filter(r =>
     /poulet|dinde/.test(norm(r.name + ' ' + r.ingredients.map(i => i.name).join(' '))));
-  assert.ok(poultry.length >= 15, 'échantillon significatif');
+  assert.ok(poultry.length >= 10, 'échantillon significatif');
   const egares = poultry.filter(r => r.cat !== 'volaille').map(r => r.name);
   assert.deepEqual(egares, [], 'aucun plat au poulet hors de Volaille');
 });

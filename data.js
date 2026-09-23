@@ -1,5 +1,6 @@
 // data.js — base interne Tablée
 import { DOCS_RECIPES } from './data-docs.js';
+import { REAL_RECIPES } from './data-reelles.js';
 
 export const AISLES = [
   { id: 'veg',    name: 'Fruits & Légumes',       emoji: '🥬' },
@@ -937,8 +938,21 @@ export const SEED_RECIPES = [
 ];
 
 // === RECETTES DU DOSSIER Docs ===
-// Reconstituées à partir des titres (les PDF d'origine sont perdus) — voir data-docs.js.
+// Reconstituées à partir des titres (les PDF d'origine étaient perdus) — voir
+// data-docs.js.
 for (const rec of DOCS_RECIPES) SEED_RECIPES.push(rec);
+
+// === RECETTES RÉELLES ===
+// Les documents d'origine ont fini par être retrouvés et transcrits : chaque
+// entrée de data-reelles.js remplace en place la fiche reconstituée de même
+// identifiant, drapeau `reconstructed` compris. Les identifiants étant
+// conservés, les favoris, la semaine et les listes de courses déjà enregistrés
+// continuent de pointer sur la bonne recette.
+for (const real of REAL_RECIPES) {
+  const i = SEED_RECIPES.findIndex(x => x.id === real.id);
+  if (i >= 0) SEED_RECIPES[i] = real;
+  else SEED_RECIPES.push(real);
+}
 
 // Mise au nouveau format : catégorie sur l'axe unique + étiquettes de style.
 // Les littéraux plus haut portent encore, pour certains, une ancienne catégorie
