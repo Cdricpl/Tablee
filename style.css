@@ -8,7 +8,12 @@
   --cream-warm: #f6edd9;
   --card: #fbf6e9;
   --card-edge: #e9dfc6;
-  --terra: #c44a2a;
+  /* Deux terracottas, pour une raison mesurée : #c44a2a sur le crème ne donne
+     que 3,96:1, sous le seuil AA de 4,5:1 exigé pour du texte. L'audit comptait
+     77 occurrences en échec — surtitres, catégories, étiquettes. L'aplat garde
+     la teinte vive, le texte prend la version foncée. */
+  --terra: #b43f21;        /* aplats : crème dessus = 5,30:1 */
+  --terra-text: #a93a1a;   /* texte sur crème/carte/warm = 5,22 à 5,88:1 */
   --terra-soft: #d96846;
   --olive: #8a9876;
   --olive-dim: #b3b89e;
@@ -127,7 +132,7 @@ main {
 .kicker {
   font-family: var(--serif-body);
   font-style: italic;
-  color: var(--terra);
+  color: var(--terra-text);
   font-size: 16px;
   margin: 0 0 2px;
 }
@@ -220,7 +225,8 @@ main {
   font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  padding: 8px 14px;
+  /* 32 px de haut avant : on atteint 44 px sans grossir le libellé. */
+  padding: 13px 14px;
   border-radius: 2px;
   white-space: nowrap;
 }
@@ -312,7 +318,7 @@ main {
   font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 0.18em;
-  color: var(--terra);
+  color: var(--terra-text);
   text-transform: uppercase;
 }
 
@@ -416,7 +422,7 @@ main {
   font-family: var(--serif-body);
   font-style: italic;
   font-size: 15px;
-  color: var(--terra);
+  color: var(--terra-text);
   margin: 0 0 1px;
 }
 
@@ -466,7 +472,7 @@ main {
 /* Les liens gardaient le bleu par défaut du navigateur, seule couleur de l'app
    hors palette. */
 .modal-card a {
-  color: var(--terra);
+  color: var(--terra-text);
   text-decoration-color: rgba(196, 74, 42, 0.4);
   text-underline-offset: 2px;
 }
@@ -548,7 +554,7 @@ main {
   font-family: var(--mono);
   font-size: 13px;
   letter-spacing: 0.05em;
-  color: var(--terra);
+  color: var(--terra-text);
 }
 
 .steps { list-style: none; padding: 0; margin: 0; counter-reset: step; }
@@ -564,7 +570,7 @@ main {
   content: counter(step, decimal-leading-zero);
   font-family: var(--serif);
   font-size: 32px;
-  color: var(--terra);
+  color: var(--terra-text);
   line-height: 1;
 }
 .steps li .step-text {
@@ -685,7 +691,7 @@ main {
 .row-x {
   background: transparent;
   border: none;
-  color: var(--terra);
+  color: var(--terra-text);
   font-size: 18px;
   width: 24px;
   padding: 0;
@@ -694,7 +700,7 @@ main {
 .step-num {
   font-family: var(--serif);
   font-size: 32px;
-  color: var(--terra);
+  color: var(--terra-text);
   line-height: 1;
 }
 
@@ -816,7 +822,7 @@ main {
   font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 0.04em;
-  color: var(--terra);
+  color: var(--terra-text);
   border: 1px solid rgba(196, 74, 42, 0.4);
   border-radius: 999px;
   padding: 3px 9px;
@@ -839,7 +845,7 @@ main {
 
 .shop-more {
   flex: none;
-  width: 36px;
+  width: 44px;
   background: none;
   border: none;
   color: var(--olive-dim);
@@ -893,7 +899,7 @@ main {
   font-family: var(--mono);
   font-size: 10px;
   letter-spacing: 0.16em;
-  color: var(--terra);
+  color: var(--terra-text);
   text-transform: uppercase;
 }
 
@@ -1035,12 +1041,13 @@ main {
 .masthead-top { position: relative; }
 .masthead-bell {
   position: absolute;
-  right: 0; top: 50%;
+  right: -10px; top: 50%;
   transform: translateY(-50%);
   margin-top: -6px;
   background: none;
   border: none;
-  padding: 4px;
+  /* 28×28 px avant : sous le seuil tactile de 44 px. */
+  padding: 12px;
   color: var(--khaki);
   cursor: pointer;
   line-height: 0;
@@ -1165,7 +1172,8 @@ body:has(.shop-bar) main { padding-bottom: 164px; }
   font-family: var(--serif-body);
   font-style: italic;
   font-size: 17px;
-  color: rgba(28, 42, 29, 0.45);
+  /* rgba(28,42,29,.45) tombait à 2,66:1 sur la carte : illisible au soleil. */
+  color: #646a5a;
 }
 .search-btn:hover { border-color: var(--olive); }
 
@@ -1288,7 +1296,7 @@ body:has(.shop-bar) main { padding-bottom: 164px; }
   font-size: 9px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--terra);
+  color: var(--terra-text);
 }
 .btn-ghost.fav[data-on="true"] { color: var(--terra); }
 
@@ -1327,7 +1335,7 @@ body:has(.shop-bar) main { padding-bottom: 164px; }
   font-size: 9px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--terra);
+  color: var(--terra-text);
   border: 1px solid rgba(196, 74, 42, 0.45);
   border-radius: 999px;
   padding: 3px 8px;
@@ -1336,6 +1344,11 @@ body:has(.shop-bar) main { padding-bottom: 164px; }
   margin-left: auto;
   background: none;
   border: none;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 8px;
   color: var(--olive-text);
   cursor: pointer;
@@ -1364,7 +1377,7 @@ body:has(.shop-bar) main { padding-bottom: 164px; }
   font-size: 10px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--terra);
+  color: var(--terra-text);
 }
 .meal-add {
   display: inline-flex;
@@ -1374,7 +1387,9 @@ body:has(.shop-bar) main { padding-bottom: 164px; }
   font-family: var(--serif-body);
   font-style: italic;
   font-size: 16px;
-  color: rgba(28, 42, 29, 0.5);
+  /* rgba(28,42,29,.5) donnait 3,02:1 : « Choisir un plat » s'effaçait sur la
+     carte, alors que c'est l'appel à l'action de la vue Semaine. */
+  color: #646a5a;
 }
 .meal-add svg { display: block; }
 
@@ -1406,8 +1421,8 @@ body:has(.shop-bar) main { padding-bottom: 164px; }
 .meal-x {
   background: none;
   border: none;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   font-size: 19px;
   line-height: 1;
   color: var(--olive-text);
