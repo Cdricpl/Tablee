@@ -226,7 +226,7 @@ main {
   letter-spacing: 0.14em;
   text-transform: uppercase;
   /* 32 px de haut avant : on atteint 44 px sans grossir le libellé. */
-  padding: 13px 14px;
+  padding: 14px;
   border-radius: 2px;
   white-space: nowrap;
 }
@@ -1468,10 +1468,13 @@ body:has(.shop-bar) main { padding-bottom: 164px; }
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  /* La zone cliquable ne faisait que 27 px de haut, même si la barre autour
+     paraît large : elle n'est pas cliquable, elle. */
+  min-height: 44px;
   background: none;
   border: none;
   border-left: 1px solid rgba(243, 232, 208, 0.25);
-  padding: 4px 0 4px 14px;
+  padding: 4px 4px 4px 14px;
   color: var(--cream);
   font-family: var(--mono);
   font-size: 11px;
